@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>grokmap: find the AI-written code nobody on your team understands</title>
+<meta name="description" content="grokmap measures comprehension debt: the AI-written code in your git repo that no one has shown they understand. Works with Claude Code, Copilot, Cursor and Codex. Free, open source, runs locally.">
+<link rel="canonical" href="https://aadithya-kl.github.io/grokmap/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="grokmap">
+<meta property="og:title" content="grokmap: find the AI-written code nobody understands">
+<meta property="og:description" content="Map comprehension debt from git history and pay it down with 2-minute quizzes from your coding agent.">
+<meta property="og:url" content="https://aadithya-kl.github.io/grokmap/">
+<meta property="og:image" content="https://aadithya-kl.github.io/grokmap/social-preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="grokmap: find the AI-written code nobody understands">
+<meta name="twitter:description" content="Map comprehension debt from git history and pay it down with 2-minute quizzes from your coding agent.">
+<meta name="twitter:image" content="https://aadithya-kl.github.io/grokmap/social-preview.png">
+<meta name="theme-color" content="#0b0b0b">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23191919'/%3E%3Crect x='6' y='6' width='12' height='20' rx='2' fill='%23dc3c3d'/%3E%3Crect x='20' y='6' width='6' height='9' rx='2' fill='%230aac23'/%3E%3Crect x='20' y='17' width='6' height='9' rx='2' fill='%23f18a59'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "grokmap",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Windows, macOS, Linux",
+  "description": "Measures comprehension debt: AI-written code in a git repository that no person has shown they understand. Detects commits from Claude Code, GitHub Copilot, Cursor, Codex and other coding agents, and quizzes developers through an agent skill.",
+  "url": "https://aadithya-kl.github.io/grokmap/",
+  "downloadUrl": "https://github.com/Aadithya-kl/grokmap",
+  "softwareVersion": "0.2.0",
+  "license": "https://opensource.org/licenses/MIT",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Person", "name": "K. L. Aadithya", "url": "https://github.com/Aadithya-kl" }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "What is comprehension debt?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Comprehension debt is the gap between how much code exists in a system and how much of it any person actually understands. It grows fastest when coding agents write code that gets merged without anyone building a mental model of it." } },
+    { "@type": "Question", "name": "How do I find out how much of my code was written by AI?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Run grokmap status in your repository. It traces every line with git blame and counts lines from commits that carry an AI agent's marker, such as a Co-Authored-By: Claude trailer or a Copilot or Cursor bot author. grokmap trend shows how that share changed over time." } },
+    { "@type": "Question", "name": "Does grokmap send my code anywhere?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No. grokmap is a local command-line tool with no dependencies beyond Python and git, and it makes no network calls." } },
+    { "@type": "Question", "name": "Which coding agents does grokmap detect?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Claude Code, GitHub Copilot, Cursor, OpenAI Codex, Aider, Devin, Gemini and Jules, Amazon Q, Windsurf and Charm Crush, plus any custom pattern you configure." } }
+  ]
+}
+</script>
+</head>
+<body>
+<nav class="top"><div class="wrap">
+  <a class="logo" href="./">grokmap</a>
+  <a href="comprehension-debt/">What is comprehension debt?</a>
+  <a href="study/">Study</a>
+  <a href="demo/">Live demo</a>
+  <a class="gh" href="https://github.com/Aadithya-kl/grokmap">GitHub ★</a>
+</div></nav>
+
+<main class="wrap">
+  <div class="hero">
+    <h1>Find the AI-written code <em>nobody on your team understands.</em></h1>
+    <p class="lead">grokmap maps <strong>comprehension debt</strong> in your git repo: code written by Claude Code, Copilot, Cursor or Codex that no person has shown they understand. Then your coding agent pays it down with two-minute quizzes.</p>
+    <div class="cta">
+      <a class="btn primary" href="demo/">Open the live demo</a>
+      <a class="btn ghost" href="https://github.com/Aadithya-kl/grokmap">View on GitHub</a>
+    </div>
+    <div class="install"><pre><code>pipx install grokmap        # or: uvx grokmap status
+grokmap status</code></pre></div>
+    <div class="shot"><picture>
+      <source media="(prefers-color-scheme: dark)" srcset="report-dark.png">
+      <img src="report-light.png" alt="grokmap report showing 35% comprehension debt, who understands each line, a weekly chart of AI-written code by agent, and a treemap of files colored by debt" width="1200" height="1528" loading="lazy">
+    </picture></div>
+  </div>
+</main>
+
+<section><div class="wrap">
+  <h2>Your tests pass. Could anyone debug it at 2am?</h2>
+  <p class="sub">Coding agents now write a large share of the code teams ship. It gets reviewed quickly, merged, and forgotten. When it breaks, nobody has a mental model of how it works. That gap doesn't show up in linters, coverage or review dashboards. grokmap makes it visible.</p>
+  <div class="grid3">
+    <div class="card"><div class="n">1 · ATTRIBUTE</div><h3>Every line, traced to its author</h3><p><code>git blame</code> maps each line to the commit that wrote it. Commits carrying an agent's marker, such as a <code>Co-Authored-By: Claude</code> trailer, count as AI-written.</p></div>
+    <div class="card"><div class="n">2 · QUIZ</div><h3>Your agent checks you understand it</h3><p>The grokmap skill gives you a short quiz on exactly the lines you haven't seen, grades you honestly, and records the result. Edited lines need understanding again.</p></div>
+    <div class="card"><div class="n">3 · MAP</div><h3>See where the risk is</h3><p>A zoomable heatmap, a README badge, a weekly trend by agent, and a pull request comment that says how much of the change anyone understands.</p></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>How much of open source is AI-written now?</h2>
+  <p class="sub">We ran grokmap on well-known repositories. In some, coding agents already write most new code. <a href="study/">Read the study →</a></p>
+  <div class="stats" id="stats">
+    <div class="stat"><div class="v">92%</div><div class="l">of the lines in the MCP reference servers come from Claude-co-authored commits</div></div>
+    <div class="stat"><div class="v">70%</div><div class="l">of GitHub's own MCP server comes from Copilot-co-authored commits</div></div>
+    <div class="stat"><div class="v">12M+</div><div class="l">public commits on GitHub carry a <code>Co-Authored-By: Claude</code> trailer</div></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Works where you already work</h2>
+  <div class="grid3">
+    <div class="card"><h3>In your coding agent</h3><p>Claude Code: <code>/plugin install grokmap --marketplace Aadithya-kl/grokmap</code>. Codex, Cursor, Gemini CLI and others: <code>npx skills add Aadithya-kl/grokmap</code>. Then say "quiz me on the payments module".</p></div>
+    <div class="card"><h3>On every pull request</h3><p>The GitHub Action posts one comment per PR: how many AI-written lines it adds and how many someone understands. Optional limits can block merges.</p></div>
+    <div class="card"><h3>In your terminal</h3><p><code>status</code>, <code>report</code>, <code>diff</code>, <code>trend</code>, <code>quiz</code>, <code>mark</code>, <code>check</code>, <code>badge</code>. Python 3.11+ and git, nothing else. Nothing leaves your machine.</p></div>
+  </div>
+</div></section>
+
+<section class="faq"><div class="wrap">
+  <h2>Questions</h2>
+  <details><summary>What is comprehension debt?</summary><p>The gap between how much code exists in a system and how much of it any person actually understands. <a href="comprehension-debt/">A longer explanation, with how to measure it.</a></p></details>
+  <details><summary>How do I find out how much of my code was written by AI?</summary><p>Run <code>grokmap status</code>. It counts lines from commits that carry an AI agent's marker. <code>grokmap trend</code> shows how that changed month by month.</p></details>
+  <details><summary>Is this surveillance?</summary><p>No. It measures code, not people. Nobody is quizzed unless they ask, and the ledger only holds what people choose to record.</p></details>
+  <details><summary>What if AI code was pasted from a chat window?</summary><p>grokmap can't see it and counts it as human-written. Detection is deliberately conservative: it only uses evidence in commit metadata.</p></details>
+  <details><summary>Does it cost anything?</summary><p>No. grokmap is MIT-licensed open source.</p></details>
+</div></section>
+
+<footer><div class="wrap">
+  <span>grokmap · MIT license · by <a href="https://github.com/Aadithya-kl">K. L. Aadithya</a></span>
+  <a href="https://github.com/Aadithya-kl/grokmap">GitHub</a>
+  <a href="https://github.com/Aadithya-kl/grokmap/issues">Issues</a>
+  <a href="https://github.com/Aadithya-kl/grokmap/discussions">Discussions</a>
+</div></footer>
+</body>
+</html>

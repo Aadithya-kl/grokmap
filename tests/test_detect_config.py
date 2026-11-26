@@ -25,6 +25,15 @@ def info(message="fix", name="Dev", email="dev@example.com", sha="a" * 40):
         ("fix\n\nCo-authored-by: Gemini <gemini@google.com>", "Dev", "d@x.io", "gemini"),
         ("fix\n\nCo-authored-by: Codex <codex@openai.com>", "Dev", "d@x.io", "codex"),
         ("fix\n\nAI-Assisted: yes", "Dev", "d@x.io", "ai"),
+        ("fix\n\nAssisted-by: Claude Fable 5", "Dev", "d@x.io", "claude"),
+        ("fix\n\nCo-Authored-By: Charm Crush <crush@charm.land>", "Dev", "d@x.io", "crush"),
+        ("fix\n\n(Written by Copilot)", "Dev", "d@x.io", "copilot"),
+        (
+            "fix\n\nCo-authored-by: Copilot Autofix powered by AI <175728472+Copilot@users.noreply.github.com>",
+            "Dev",
+            "d@x.io",
+            "copilot",
+        ),
     ],
 )
 def test_builtin_signatures(message, name, email, tool):
@@ -39,6 +48,8 @@ def test_builtin_signatures(message, name, email, tool):
         ("normal commit\n\nCo-authored-by: Jane Doe <jane@example.com>", "Dev", "d@x.io"),
         ("fix", "Sam", "sam@openai.com"),  # people who work at AI labs are not bots
         ("fix", "Sam", "sam@anthropic.com"),
+        ("I have a crush on this API", "Dev", "d@x.io"),
+        ("normal\n\nAssisted-by: Jane Doe <jane@example.com>", "Dev", "d@x.io"),
     ],
 )
 def test_human_commits_stay_human(message, name, email):

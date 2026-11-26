@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://aadithya-kl.github.io/grokmap/sitemap.xml

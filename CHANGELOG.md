@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.2.1
+
+- Detect Charm Crush commits, `Assisted-by: Claude` / Copilot / Codex trailers, Copilot Autofix and "(Written by Copilot)".
+- A generic `Assisted-by:` trailer only counts as AI when it names an AI (it can name a person).
+- New website: landing page, "What is comprehension debt?" explainer and a study of 18 open-source repositories; the demo moved to `/demo/`.
+
 ## 0.2.0
 
 - `grokmap diff`: the AI-written lines a branch adds and how many are understood, as text, JSON or a PR comment. `--max-unread` gates merges.

@@ -18,16 +18,22 @@ BUILTIN_SIGNATURES: list[tuple[str, str, str]] = [
     ("claude", "message", r"^co-authored-by:.*\b(claude|anthropic)\b"),
     ("claude", "message", r"generated with \[?claude code"),
     ("claude", "message", r"^claude-session:"),
+    ("claude", "message", r"^assisted-by:.*\bclaude\b"),
     ("claude", "author", r"\bclaude\[bot\]|noreply@anthropic\.com"),
     # GitHub Copilot (agent mode, coding agent, co-author trailer)
     ("copilot", "message", r"^co-authored-by:.*\b(copilot|github copilot)\b"),
     ("copilot", "author", r"copilot-swe-agent|^copilot\b|copilot@github\.com|\bcopilot\[bot\]"),
+    ("copilot", "message", r"^\(written by copilot\)|^assisted-by:.*\bcopilot\b"),
     # Cursor
     ("cursor", "message", r"^co-authored-by:.*\bcursor(agent)?\b"),
     ("cursor", "author", r"cursoragent@cursor\.com|\bcursor agent\b"),
     # OpenAI Codex / ChatGPT
     ("codex", "message", r"^co-authored-by:.*\b(codex|chatgpt|openai)\b"),
     ("codex", "author", r"\bchatgpt-codex|codex\[bot\]"),
+    ("codex", "message", r"^assisted-by:.*\b(codex|gpt-\d)"),
+    # Charm Crush
+    ("crush", "message", r"^co-authored-by:.*<crush@charm\.land>"),
+    ("crush", "author", r"crush@charm\.land"),
     # Aider
     ("aider", "message", r"^aider:"),
     ("aider", "message", r"^co-authored-by:.*\baider\b"),
@@ -43,7 +49,8 @@ BUILTIN_SIGNATURES: list[tuple[str, str, str]] = [
     # Windsurf / Codeium
     ("windsurf", "message", r"^co-authored-by:.*\b(windsurf|codeium|cascade)\b"),
     # Generic marker many teams adopt
-    ("ai", "message", r"^(ai-assisted|ai-generated|assisted-by):"),
+    ("ai", "message", r"^(ai-assisted|ai-generated):"),
+    ("ai", "message", r"^assisted-by:.*\b(ai|llm|gpt|gemini|agent|model)\b"),
 ]
 
 

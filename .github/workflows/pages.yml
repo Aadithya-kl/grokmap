@@ -25,15 +25,21 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m pip install .
+      - name: Check the study page is up to date with its data
+        run: |
+          python scripts/build_study.py
+          git diff --exit-code site/study/index.html
       - name: Build the demo repository and its report
         run: |
           git config --global user.email "demo@example.com"
           git config --global user.name "grokmap demo"
           python scripts/make_demo.py "$RUNNER_TEMP/demo" --with-ledger
-          mkdir -p _site
-          grokmap -C "$RUNNER_TEMP/demo" report -o _site/index.html --name shopcart \
+          mkdir -p _site/demo
+          cp -r site/. _site/
+          rm -f _site/study/template.html
+          grokmap -C "$RUNNER_TEMP/demo" report -o _site/demo/index.html --name shopcart \
             --note "Live demo of grokmap on a small fake shop written mostly by AI agents. Hover anything; click folders to zoom. github.com/Aadithya-kl/grokmap"
-          grokmap -C "$RUNNER_TEMP/demo" badge -o _site/badge.svg
+          grokmap -C "$RUNNER_TEMP/demo" badge -o _site/demo/badge.svg
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

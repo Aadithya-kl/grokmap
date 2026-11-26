@@ -5,11 +5,12 @@
 **Find the AI-written code nobody on your team understands, and pay it down one short quiz at a time.**
 
 [![ci](https://github.com/Aadithya-kl/grokmap/actions/workflows/ci.yml/badge.svg)](https://github.com/Aadithya-kl/grokmap/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/grokmap)](https://pypi.org/project/grokmap/)
 ![python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 ![license](https://img.shields.io/badge/license-MIT-lightgrey)
 
-**[▶ Open the live demo](https://aadithya-kl.github.io/grokmap/)** · [Install](#install) · [Agent skill](#add-the-skill-to-your-coding-agent) · [CI and PR comments](#in-ci)
+**[▶ Live demo](https://aadithya-kl.github.io/grokmap/demo/)** · [Website](https://aadithya-kl.github.io/grokmap/) · [Study: how much of open source is AI-written?](https://aadithya-kl.github.io/grokmap/study/) · [Install](#install) · [Agent skill](#add-the-skill-to-your-coding-agent) · [CI and PR comments](#in-ci)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/report-dark.png">
@@ -48,6 +49,12 @@ src/shopcart/api/auth.py                                  23      23       0    
 Pay it down: ask your coding agent to run `grokmap quiz <file>` and quiz you.
 ```
 
+## How much of your code is AI-written?
+
+`grokmap status` answers that in seconds, and `grokmap trend` shows how it changed month by month. We ran it on 18 well-known open-source projects. In the [MCP reference servers](https://github.com/modelcontextprotocol/servers), 94% of commits from August to October 2026 were co-authored by Claude; in VS Code, 74% were co-authored by Copilot. Read the [full study](https://aadithya-kl.github.io/grokmap/study/), including its limitations.
+
+New to the idea? [What is comprehension debt, and how do you measure it?](https://aadithya-kl.github.io/grokmap/comprehension-debt/)
+
 ## How you pay it down: your agent quizzes you
 
 grokmap ships an **agent skill**. After your coding agent writes something substantial, it offers a two-minute quiz on exactly the lines you haven't shown you understand, grades you honestly, and records the result:
@@ -73,10 +80,10 @@ Understanding is tracked **per line**. If the agent later rewrites a line you we
 ## Install
 
 ```bash
-pipx install git+https://github.com/Aadithya-kl/grokmap
+pipx install grokmap        # or: pip install grokmap
 ```
 
-Or try it without installing: `uvx --from git+https://github.com/Aadithya-kl/grokmap grokmap status`
+Or try it without installing: `uvx grokmap status`
 
 Python 3.11+ and git. No other dependencies, no network calls, nothing leaves your machine.
 
@@ -174,6 +181,7 @@ It also writes the repo summary to the job page, uploads the heatmap as an artif
    | Cursor | `cursoragent@cursor.com` author or co-author |
    | OpenAI Codex | `chatgpt-codex` / `codex[bot]`, Codex co-author |
    | Aider | `aider:` message prefix, `(aider)` author suffix |
+   | Charm Crush | `crush@charm.land` co-author |
    | Devin, Gemini / Jules, Amazon Q, Windsurf | their bot authors or co-author trailers |
    | Your own | any regex in `[grokmap.ai_patterns]`, or specific commits in `[grokmap.ai_commits]` |
 

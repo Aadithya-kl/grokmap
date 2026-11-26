@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What is comprehension debt? How to measure and reduce it in AI-written code</title>
+<meta name="description" content="Comprehension debt is the gap between the code in your system and the code anyone understands. Why AI coding agents make it grow, how to measure it from git history, and how to pay it down.">
+<link rel="canonical" href="https://aadithya-kl.github.io/grokmap/comprehension-debt/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="What is comprehension debt? How to measure and reduce it">
+<meta property="og:description" content="Why AI coding agents grow the gap between code that exists and code anyone understands, and how to measure it.">
+<meta property="og:url" content="https://aadithya-kl.github.io/grokmap/comprehension-debt/">
+<meta property="og:image" content="https://aadithya-kl.github.io/grokmap/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "What is comprehension debt? How to measure and reduce it in AI-written code",
+  "author": { "@type": "Person", "name": "K. L. Aadithya", "url": "https://github.com/Aadithya-kl" },
+  "datePublished": "2026-11-27",
+  "dateModified": "2026-11-27",
+  "image": "https://aadithya-kl.github.io/grokmap/social-preview.png",
+  "mainEntityOfPage": "https://aadithya-kl.github.io/grokmap/comprehension-debt/"
+}
+</script>
+</head>
+<body>
+<nav class="top"><div class="wrap">
+  <a class="logo" href="../">grokmap</a>
+  <a href="./">What is comprehension debt?</a>
+  <a href="../study/">Study</a>
+  <a href="../demo/">Live demo</a>
+  <a class="gh" href="https://github.com/Aadithya-kl/grokmap">GitHub ★</a>
+</div></nav>
+
+<article>
+<h1>What is comprehension debt?</h1>
+<div class="meta">How to measure it, and how to pay it down · K. L. Aadithya · November 2026</div>
+
+<div class="tldr"><strong>In short:</strong> comprehension debt is the gap between how much code exists in your system and how much of it any person on your team actually understands. AI coding agents make it grow faster than ever, because code now arrives faster than people can build a mental model of it. You can measure it from git history, and you pay it down by having people genuinely engage with the code, not by writing more documentation.</div>
+
+<h2>A definition</h2>
+<p>Every codebase has two sizes: the amount of code in it, and the amount of it that someone on the team could explain, change safely or debug without help. <strong>Comprehension debt</strong> is the difference between the two.</p>
+<p>It is different from <em>technical debt</em>. Technical debt is about the code itself: shortcuts, missing tests, tangled dependencies. It slows you down every day, so you notice it. Comprehension debt is about people. The code can be clean, well tested and well named and still be debt, because nobody has a model of how it works. It stays invisible until something breaks and the person on call opens a file nobody has ever really read.</p>
+<p>The term was popularized in 2026 by <a href="https://addyosmani.com/blog/comprehension-debt/">Addy Osmani</a>, who argued that code review used to force understanding: reading a colleague's change was a bottleneck, but a productive one. When an agent writes the code and the review is a quick skim of a clean-looking diff, that feedback loop disappears.</p>
+
+<h2>Why AI coding agents make it grow</h2>
+<p>Agents don't create comprehension debt on purpose. It comes from how they change the economics of writing code:</p>
+<ul>
+  <li><strong>Volume.</strong> One person with an agent can produce several times as many lines per day. Reading speed did not change.</li>
+  <li><strong>Plausibility.</strong> Agent-written code is usually syntactically clean and follows conventions, exactly the signals that used to tell a reviewer "this is fine".</li>
+  <li><strong>Passive delegation.</strong> "Make the tests pass" is a different task from "help me understand this". A randomized study by Anthropic researchers (<a href="https://arxiv.org/abs/2601.20245">arXiv:2601.20245</a>) found that developers who leaned on AI assistance while learning a new library finished in about the same time but scored noticeably lower on a follow-up comprehension quiz, and that passive delegation hurt far more than asking the AI questions.</li>
+</ul>
+<p>None of this means agents are bad. It means understanding no longer happens as a side effect of writing code, so it has to happen on purpose.</p>
+
+<h2>What it costs</h2>
+<ul>
+  <li><strong>Slow incidents.</strong> Debugging code nobody understands is archaeology, under time pressure.</li>
+  <li><strong>Risky changes.</strong> People are reluctant to touch code they can't explain, so it calcifies, or they change it blindly.</li>
+  <li><strong>A bus factor of zero.</strong> With human-written code, at least the author understood it once. With agent-written code, possibly nobody ever did.</li>
+  <li><strong>False confidence.</strong> Dashboards look healthy: coverage is high, the linter is quiet, velocity is up.</li>
+</ul>
+
+<h2>How to measure comprehension debt</h2>
+<p>You can't measure what's in people's heads directly, but you can measure two things that together get you most of the way:</p>
+<h3>1. Which code was written by AI</h3>
+<p>Most coding agents leave evidence in git: Claude Code adds a <code>Co-Authored-By: Claude</code> trailer, GitHub's Copilot coding agent commits as its own account or adds a co-author line, Cursor's agent uses <code>cursoragent@cursor.com</code>, Aider prefixes messages with <code>aider:</code>. Combine that with <code>git blame</code> and you know, line by line, which current code came from an agent-assisted commit.</p>
+<h3>2. Which of it someone has shown they understand</h3>
+<p>This is the part teams skip. Approving a pull request is weak evidence; answering questions about the code is strong evidence. A short quiz, "what happens if this list is empty?", "why is this check before that one?", "a user reports X, where do you look?", separates understanding from skimming in two minutes.</p>
+<p>Then you can define a number:</p>
+<pre><code>comprehension debt = (AI-written lines nobody has shown they understand
+                      + ½ × lines only skimmed or understood long ago)
+                     ÷ all meaningful lines</code></pre>
+<p>This is exactly what <a href="../">grokmap</a> computes. It runs locally on any git repository:</p>
+<pre><code>pipx install grokmap
+grokmap status      # the number, the riskiest files, who understands what
+grokmap report      # an interactive heatmap
+grokmap trend       # how the AI-written share changed month by month</code></pre>
+<p>Understanding is tracked per line: if a line someone was quizzed on is later changed, it counts as new code again. Understanding older than six months is marked as fading.</p>
+
+<h2>How to pay it down</h2>
+<ol>
+  <li><strong>Quiz right after the change.</strong> The best moment to understand code is right after an agent writes it, while the context is fresh. grokmap's agent skill offers a two-minute quiz before you commit, on exactly the lines you haven't seen.</li>
+  <li><strong>Start with the riskiest files.</strong> Debt in payment, authentication or data-migration code matters more than debt in a test fixture. Mark critical paths and look at those first.</li>
+  <li><strong>Make it visible in pull requests.</strong> A PR comment saying "this change adds 340 AI-written lines, 0 understood" changes behavior more than any policy document.</li>
+  <li><strong>Ask, don't just delegate.</strong> Using the agent to explain code, rather than only to produce it, builds understanding instead of eroding it.</li>
+  <li><strong>Don't turn it into a leaderboard.</strong> The goal is an honest map of what the team understands, not a ranking of people. A measure people game is worse than none.</li>
+</ol>
+
+<h2>What comprehension debt is not</h2>
+<ul>
+  <li><strong>Not an argument against AI coding.</strong> Teams that write most of their code with agents can have low comprehension debt if people engage with what gets merged.</li>
+  <li><strong>Not the same as missing documentation.</strong> Docs help, but reading a design doc is not the same as being able to debug the code.</li>
+  <li><strong>Not measurable from code alone.</strong> Static analysis can tell you code is complex; it can't tell you nobody understands it.</li>
+</ul>
+
+<h2>Try it on your repository</h2>
+<p><a href="../demo/">See a live example report</a>, read <a href="../study/">how much of popular open-source projects is AI-written</a>, or install <a href="https://github.com/Aadithya-kl/grokmap">grokmap from GitHub</a>. It's free, MIT-licensed, and makes no network calls.</p>
+</article>
+
+<footer><div class="wrap">
+  <span>grokmap · MIT license · by <a href="https://github.com/Aadithya-kl">K. L. Aadithya</a></span>
+  <a href="../">Home</a><a href="../study/">Study</a><a href="https://github.com/Aadithya-kl/grokmap">GitHub</a>
+</div></footer>
+</body>
+</html>

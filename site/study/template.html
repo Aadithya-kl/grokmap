@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How much of popular open-source code is AI-written? A study of {{N}} repositories (Nov 2026)</title>
+<meta name="description" content="We measured AI-co-authored commits and lines in {{N}} well-known open-source repositories, including VS Code, uv, Bun, Zed and the MCP servers. In {{MAJORITY}} of them, most recent commits are now AI co-authored.">
+<link rel="canonical" href="https://aadithya-kl.github.io/grokmap/study/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="How much of popular open-source code is AI-written?">
+<meta property="og:description" content="AI co-authored commits in {{N}} well-known repositories, 2025 vs late 2026, measured with grokmap.">
+<meta property="og:url" content="https://aadithya-kl.github.io/grokmap/study/">
+<meta property="og:image" content="https://aadithya-kl.github.io/grokmap/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "How much of popular open-source code is AI-written? A study of {{N}} repositories",
+  "author": { "@type": "Person", "name": "K. L. Aadithya", "url": "https://github.com/Aadithya-kl" },
+  "datePublished": "{{GENERATED}}",
+  "image": "https://aadithya-kl.github.io/grokmap/social-preview.png",
+  "mainEntityOfPage": "https://aadithya-kl.github.io/grokmap/study/"
+}
+</script>
+</head>
+<body>
+<nav class="top"><div class="wrap">
+  <a class="logo" href="../">grokmap</a>
+  <a href="../comprehension-debt/">What is comprehension debt?</a>
+  <a href="./">Study</a>
+  <a href="../demo/">Live demo</a>
+  <a class="gh" href="https://github.com/Aadithya-kl/grokmap">GitHub ★</a>
+</div></nav>
+
+<article style="max-width:960px">
+<h1>How much of popular open-source code is AI-written?</h1>
+<div class="meta">A study of {{N}} well-known repositories · {{GENERATED}} · measured with grokmap {{VERSION}}</div>
+
+<div class="tldr"><strong>Key findings</strong>
+<ul class="findings">
+  <li>In <strong>{{MAJORITY}} of {{N}}</strong> projects, most commits from August to October 2026 were co-authored by an AI coding agent: {{MAJORITY_LIST}}.</li>
+  <li><strong>{{RISING}} of {{N}}</strong> projects mark a larger share of their commits as AI co-authored now than in 2025.</li>
+  <li>Across GitHub, more than <strong>{{TRAILER}}</strong> public commits carry a <code>Co-Authored-By: Claude</code> trailer alone.</li>
+  <li>The visible numbers depend heavily on each project's commit conventions. Several projects that certainly use AI tools show near zero, because their commits don't carry agent markers. Read these as a lower bound.</li>
+</ul></div>
+
+<h2>AI co-authored commits: 2025 vs. late 2026</h2>
+<p>Share of non-merge commits whose metadata marks an AI coding agent as author or co-author. Grey: all of 2025. Blue: August to October 2026.</p>
+{{DUMBBELL}}
+
+<h2>How much of the current code came from AI co-authored commits</h2>
+<p>For seven projects we cloned full history and ran <code>grokmap status</code>, which uses <code>git blame</code> to attribute every meaningful line at HEAD to the commit that last changed it. Bars show the share of current lines whose last change came from an AI co-authored commit, split by agent.</p>
+{{LINEBARS}}
+
+<h2>All repositories</h2>
+{{TABLE}}
+
+<h2>Why this matters</h2>
+<p>Writing code is no longer the bottleneck; understanding it is. When most new commits in a project are co-authored by an agent, the question that matters for maintainers is not "who typed this?" but "does anyone here understand it well enough to debug it?". That gap is <a href="../comprehension-debt/">comprehension debt</a>, and it is invisible in the usual metrics. This study only measures the first half, AI involvement. The second half, understanding, can't be seen from outside a team, which is why grokmap pairs these numbers with an opt-in ledger of quiz results.</p>
+
+<h2>Method</h2>
+<ul>
+  <li><strong>Repositories:</strong> {{N}} widely used open-source projects across editors, developer tools, AI frameworks and agent tooling, chosen for popularity and active development, not for known AI use. Default branch, non-merge commits, {{TOTAL_COMMITS}} commits since January 2025.</li>
+  <li><strong>Detection:</strong> grokmap's built-in signatures: co-author trailers (<code>Co-Authored-By: Claude</code>, <code>Co-authored-by: Copilot</code>, Codex, Cursor, Charm Crush and others), agent bot authors (Copilot coding agent, Devin, Jules…), and footers such as "Generated with Claude Code". The full list is in <a href="https://github.com/Aadithya-kl/grokmap/blob/main/src/grokmap/detect.py">detect.py</a>.</li>
+  <li><strong>Line attribution:</strong> <code>git blame -w</code> at HEAD, ignoring blank lines and lone punctuation, with grokmap's default exclusions (lock files, build output, vendored code, media).</li>
+</ul>
+
+<h2>Limitations (please read before quoting)</h2>
+<ul>
+  <li><strong>Co-authored is not the same as written.</strong> A trailer says an agent took part in a commit, not how many of its lines the agent produced. In squash-merged pull requests, a single accepted Copilot review suggestion can add a <code>Co-authored-by: Copilot</code> line to a commit that is otherwise human work, and blame then attributes the whole commit to the agent. One example: a large "v1.0" squash merge in goose credits a dozen people plus Copilot.</li>
+  <li><strong>Absence of markers is not absence of AI.</strong> Projects that squash commits with edited messages, or whose agents don't add trailers, show low numbers regardless of actual use. Drops (for example openai/codex and oven-sh/bun) most likely reflect changed commit conventions, not less AI use.</li>
+  <li><strong>Conventions vary by tool.</strong> Copilot-heavy projects like VS Code add a co-author line whenever agent edits are included in a commit, which is more systematic than most other workflows. Comparisons across projects say as much about conventions as about AI use.</li>
+  <li><strong>Snapshot.</strong> Data collected on {{GENERATED}}. Numbers will change; the method is reproducible below.</li>
+</ul>
+
+<h2>Reproduce it</h2>
+<pre><code>pipx install grokmap
+git clone https://github.com/modelcontextprotocol/servers && cd servers
+grokmap status            # share of current lines from AI co-authored commits
+grokmap trend --by month  # AI vs human lines added per month, by agent</code></pre>
+<p>The raw numbers behind this page are in <a href="data.json">data.json</a>. If you maintain one of these projects and think a number is misleading, please <a href="https://github.com/Aadithya-kl/grokmap/issues/new">open an issue</a> and it will be corrected.</p>
+</article>
+
+<footer><div class="wrap">
+  <span>grokmap · MIT license · by <a href="https://github.com/Aadithya-kl">K. L. Aadithya</a></span>
+  <a href="../">Home</a><a href="../comprehension-debt/">Comprehension debt</a><a href="https://github.com/Aadithya-kl/grokmap">GitHub</a>
+</div></footer>
+</body>
+</html>
