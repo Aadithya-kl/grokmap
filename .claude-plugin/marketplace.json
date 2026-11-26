@@ -1,0 +1,14 @@
+{
+  "name": "grokmap",
+  "owner": {
+    "name": "K. L. Aadithya"
+  },
+  "plugins": [
+    {
+      "name": "grokmap",
+      "source": "./",
+      "description": "Quiz yourself on AI-written code and map the comprehension debt in your repo."
+    }
+  ],
+  "description": "grokmap: quiz yourself on AI-written code and map comprehension debt"
+}

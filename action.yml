@@ -1,0 +1,82 @@
+name: grokmap
+description: Measure comprehension debt (AI-written code nobody has shown they understand), publish the heatmap, and optionally fail above a limit.
+author: K. L. Aadithya
+branding:
+  icon: map
+  color: red
+
+inputs:
+  max-debt:
+    description: Fail when comprehension debt (%) is above this. Leave empty to only report.
+    required: false
+    default: ""
+  critical:
+    description: Set to "true" to check only the paths listed as critical in .grokmap.toml.
+    required: false
+    default: "false"
+  report:
+    description: Upload the HTML heatmap as a workflow artifact.
+    required: false
+    default: "true"
+  working-directory:
+    description: Folder inside the repository to run in.
+    required: false
+    default: "."
+
+outputs:
+  debt:
+    description: Comprehension debt in percent.
+    value: ${{ steps.measure.outputs.debt }}
+  ai-lines:
+    description: Number of AI-written lines at HEAD.
+    value: ${{ steps.measure.outputs.ai_lines }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install grokmap
+      shell: bash
+      run: python -m pip install --quiet "${{ github.action_path }}"
+
+    - name: Check history depth
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+          echo "::warning title=grokmap::Shallow clone: blame stops at the clone boundary, so authorship is incomplete. Use actions/checkout with fetch-depth: 0."
+        fi
+
+    - name: Measure
+      id: measure
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        grokmap status --markdown --top 10 >> "$GITHUB_STEP_SUMMARY"
+        grokmap status --json > "$RUNNER_TEMP/grokmap.json"
+        python - "$RUNNER_TEMP/grokmap.json" >> "$GITHUB_OUTPUT" <<'PY'
+        import json, sys
+        t = json.load(open(sys.argv[1]))["total"]
+        print(f"debt={t['debt_pct']}")
+        print(f"ai_lines={t['ai']}")
+        PY
+        grokmap report -o "$RUNNER_TEMP/grokmap-report/index.html"
+
+    - name: Upload heatmap
+      if: inputs.report == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: grokmap-report
+        path: ${{ runner.temp }}/grokmap-report/index.html
+
+    - name: Enforce limit
+      if: inputs.max-debt != ''
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        args=(--max-debt "${{ inputs.max-debt }}")
+        if [ "${{ inputs.critical }}" = "true" ]; then args+=(--critical); fi
+        grokmap check "${args[@]}"
