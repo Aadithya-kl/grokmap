@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Questions and show-and-tell
+    url: https://github.com/Aadithya-kl/grokmap/discussions
+    about: Share your team's grokmap report or ask how to use it.

@@ -97,6 +97,14 @@ td.path { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 .empty { color: var(--ink-2); font-size: 13px; padding: 12px 0; }
 footer { color: var(--ink-2); font-size: 12px; line-height: 1.6; }
 footer code { font-size: 12px; }
+.t1{--c:#257de0}.t2{--c:#f47230}.t3{--c:#00b894}.t4{--c:#f2a600}.t5{--c:#ee7fac}.t6{--c:#6a4ce2}
+:root[data-theme="dark"] .t1{--c:#338ced} :root[data-theme="dark"] .t2{--c:#e76624} :root[data-theme="dark"] .t3{--c:#00a888} :root[data-theme="dark"] .t4{--c:#d28e05} :root[data-theme="dark"] .t5{--c:#e24d8b} :root[data-theme="dark"] .t6{--c:#9887ef}
+@media (prefers-color-scheme: dark) { :root:where(:not([data-theme="light"])) .t1{--c:#338ced} :root:where(:not([data-theme="light"])) .t2{--c:#e76624} :root:where(:not([data-theme="light"])) .t3{--c:#00a888} :root:where(:not([data-theme="light"])) .t4{--c:#d28e05} :root:where(:not([data-theme="light"])) .t5{--c:#e24d8b} :root:where(:not([data-theme="light"])) .t6{--c:#9887ef} }
+#trend svg { display: block; width: 100%; height: 260px; overflow: visible; }
+#trend text { fill: var(--ink-2); font-size: 11px; font-variant-numeric: tabular-nums; }
+#trend .grid line { stroke: var(--grid); } #trend .base { stroke: var(--axis); }
+#trend rect.hit { fill: transparent; } #trend g.col:hover rect.hit { fill: var(--ring); }
+.note { margin-top: 4px; font-size: 13px; color: var(--ink-2); }
 @media (max-width: 900px) { .hero { grid-template-columns: 1fr 1fr; } .hero .main { grid-column: 1 / -1; } .grid2 { grid-template-columns: 1fr; } #treemap { height: 420px; } }
 @media (forced-colors: active) { .cell { border: 1px solid CanvasText; } }
 </style>
@@ -105,7 +113,7 @@ footer code { font-size: 12px; }
 <div class="viz-root">
 <div class="wrap">
   <header>
-    <div class="brand"><b>grokmap</b><h1 id="repo"></h1><span class="meta" id="meta"></span></div>
+    <div><div class="brand"><b>grokmap</b><h1 id="repo"></h1><span class="meta" id="meta"></span></div><div class="note" id="note" hidden></div></div>
     <button class="theme" id="theme" type="button" aria-label="Toggle light and dark theme">Theme: auto</button>
   </header>
 
@@ -126,6 +134,13 @@ footer code { font-size: 12px; }
     <p class="sub">Blank lines and lone brackets are not counted.</p>
     <div class="bar" id="bar" role="img"></div>
     <div class="legend" id="bar-legend"></div>
+  </section>
+
+  <section class="card" id="trend-card" hidden>
+    <h2>Who wrote the code, over time</h2>
+    <p class="sub" id="trend-sub">Lines added per period, by people and by each coding agent. Merge commits are skipped.</p>
+    <div id="trend"></div>
+    <div class="legend" id="trend-legend"></div>
   </section>
 
   <section class="card">
@@ -405,7 +420,52 @@ $("q").addEventListener("input", drawFiles);
 $("all").addEventListener("change", drawFiles);
 $("foot").innerHTML = `How this is measured: each meaningful line at HEAD is traced with <code>git blame</code> to the commit that wrote it. Commits carrying an AI agent's marker (for example a <code>Co-Authored-By: Claude</code> trailer, a Copilot or Cursor bot author) count as AI-written. A line counts as understood when someone passed a <code>grokmap quiz</code> on it; if the line changes later, it needs understanding again. Understanding older than the decay window counts as fading. Debt = unread lines + half of skimmed and fading lines, divided by all lines.`;
 
-drawAll(); drawFiles(); drawSide();
+// ---------- trend ----------
+function drawTrend() {
+  const tr = DATA.trend; if (!tr || tr.periods.filter(p => p.human + Object.values(p.tools).reduce((a, b) => a + b, 0) > 0).length < 2) return;
+  $("trend-card").hidden = false;
+  const tools = Object.keys(tr.summary.tools); const shown = tools.slice(0, 5); const other = tools.length > 5;
+  const series = [{ key: "human", name: "People", fill: "var(--human)" }]
+    .concat(shown.map((t, i) => ({ key: t, name: t, cls: "t" + (i + 1), fill: "var(--c)" })))
+    .concat(other ? [{ key: "__other", name: "Other agents", cls: "t6", fill: "var(--c)" }] : []);
+  const val = (p, k) => k === "human" ? p.human : k === "__other" ? Object.entries(p.tools).filter(([t]) => !shown.includes(t)).reduce((a, [, v]) => a + v, 0) : (p.tools[k] || 0);
+  const P = tr.periods, totals = P.map(p => series.reduce((a, s) => a + val(p, s.key), 0));
+  const W = $("trend").clientWidth || 900, H = 260, L = 44, B = 24, T = 8;
+  const max = Math.max(...totals, 1), step = Math.pow(10, Math.floor(Math.log10(max))), top = Math.ceil(max / step) * step;
+  const y = v => T + (H - T - B) * (1 - v / top), bw = (W - L) / P.length, gap = Math.min(2, bw * 0.2);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Stacked bars of lines added per ${tr.by}"><g class="grid">`;
+  for (let i = 0; i <= 4; i++) { const v = top * i / 4; svg += `<line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${fmt(Math.round(v))}</text>`; }
+  svg += `</g>`;
+  const every = Math.max(1, Math.ceil(P.length / 10));
+  P.forEach((p, i) => {
+    const x = L + i * bw; let acc = 0; svg += `<g class="col" data-i="${i}"><rect class="hit" x="${x}" y="${T}" width="${bw}" height="${H - T - B}"/>`;
+    const segs = series.map(s => ({ s, v: val(p, s.key) })).filter(o => o.v > 0);
+    segs.forEach((o, j) => {
+      const y0 = y(acc), y1 = y(acc + o.v); acc += o.v;
+      const h = Math.max(0, y0 - y1 - (j < segs.length - 1 ? 2 : 0));
+      const r = j === segs.length - 1 ? Math.min(4, h, (bw - gap) / 2) : 0;
+      const w = Math.max(1, bw - gap), xx = x + gap / 2, yy = y1;
+      svg += r > 0 ? `<path class="${o.s.cls || ""}" fill="${o.s.fill}" d="M${xx},${yy + h} V${yy + r} Q${xx},${yy} ${xx + r},${yy} H${xx + w - r} Q${xx + w},${yy} ${xx + w},${yy + r} V${yy + h} Z"/>`
+        : `<rect class="${o.s.cls || ""}" fill="${o.s.fill}" x="${xx}" y="${yy}" width="${w}" height="${h}"/>`;
+    });
+    if (i % every === 0) svg += `<text x="${x + bw / 2}" y="${H - 6}" text-anchor="middle">${tr.by === "month" ? p.start.slice(0, 7) : p.start.slice(5)}</text>`;
+    svg += `</g>`;
+  });
+  svg += `<line class="base" x1="${L}" x2="${W}" y1="${y(0)}" y2="${y(0)}"/></svg>`;
+  $("trend").innerHTML = svg;
+  $("trend").querySelectorAll("g.col").forEach(g => {
+    const p = P[+g.dataset.i], tot = totals[+g.dataset.i];
+    g.addEventListener("mousemove", e => showTip(e, `<div class="t">${tr.by === "month" ? "Month of " + p.start.slice(0, 7) : "Week of " + p.start}</div>` +
+      series.map(s => `<div class="r"><span><i class="sw ${s.cls || ""}" style="background:${s.fill}"></i>${esc(s.name)}</span><span>${fmt(val(p, s.key))}</span></div>`).join("") +
+      `<div class="r"><span>AI share</span><span><b>${tot ? p1(pct(tot - p.human, tot)) : "–"}</b></span></div>`));
+    g.addEventListener("mouseleave", hideTip);
+  });
+  $("trend-legend").innerHTML = series.map(s => `<span class="k"><i class="sw ${s.cls || ""}" style="background:${s.fill}"></i>${esc(s.name)} <span class="n">${fmt(s.key === "human" ? tr.summary.human : s.key === "__other" ? tools.slice(5).reduce((a, t) => a + tr.summary.tools[t], 0) : tr.summary.tools[s.key])}</span></span>`).join("");
+  $("trend-sub").textContent = `Lines added per ${tr.by}: ${p1(tr.summary.ai_pct)} written by AI agents. Merge commits are skipped.`;
+}
+if (DATA.note) { $("note").textContent = DATA.note; $("note").hidden = false; }
+drawAll(); drawFiles(); drawSide(); drawTrend();
+let rt2; addEventListener("resize", () => { clearTimeout(rt2); rt2 = setTimeout(() => { if (!$("trend-card").hidden) drawTrend(); }, 150); });
 let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(drawTreemap, 120); });
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", drawTreemap);
 new MutationObserver(drawTreemap).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });

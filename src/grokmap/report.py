@@ -12,7 +12,7 @@ from grokmap.scan import Scan
 from grokmap.score import Result
 
 
-def build_payload(scan: Scan, result: Result, repo_name: str) -> dict:
+def build_payload(scan: Scan, result: Result, repo_name: str, trend: dict | None = None, note: str | None = None) -> dict:
     files = []
     for path, st in sorted(result.files.items()):
         files.append(
@@ -39,12 +39,14 @@ def build_payload(scan: Scan, result: Result, repo_name: str) -> dict:
         "total": total.to_dict(),
         "critical": result.critical.to_dict() if result.critical_files else None,
         "files": files,
+        "trend": trend,
+        "note": note,
     }
 
 
-def render_report(scan: Scan, result: Result, repo_name: str) -> str:
+def render_report(scan: Scan, result: Result, repo_name: str, trend: dict | None = None, note: str | None = None) -> str:
     template = resources.files("grokmap").joinpath("report_template.html").read_text(encoding="utf-8")
-    data = json.dumps(build_payload(scan, result, repo_name), separators=(",", ":"))
+    data = json.dumps(build_payload(scan, result, repo_name, trend, note), separators=(",", ":"))
     data = data.replace("</", "<\\/")
     return template.replace("/*__GROKMAP_DATA__*/null", data).replace("__GROKMAP_TITLE__", _html_escape(repo_name))
 

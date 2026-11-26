@@ -8,7 +8,7 @@ import sys
 import webbrowser
 from pathlib import Path
 
-from grokmap import __version__, gitutil
+from grokmap import __version__, gitutil, prdiff, trend
 from grokmap.badge import render_badge
 from grokmap.config import DEFAULT_TOML, load_config
 from grokmap.ledger import METHODS, ledger_path, load_ledger
@@ -137,10 +137,51 @@ def cmd_report(args) -> int:
     root, cfg = _context(args)
     scan, res = _analyze(root, cfg, args.no_cache)
     out = Path(args.output) if args.output else root / "grokmap-report.html"
-    write_report(out, render_report(scan, res, args.name or root.name))
+    by, buckets = trend.collect(root, cfg)
+    write_report(out, render_report(scan, res, args.name or root.name, trend.to_json(by, buckets), args.note))
     print(f"grokmap: wrote {out}")
     if args.open:
         webbrowser.open(out.resolve().as_uri())
+    return 0
+
+
+def cmd_trend(args) -> int:
+    root, cfg = _context(args)
+    by, buckets = trend.collect(root, cfg, args.by, args.since)
+    if args.json:
+        print(json.dumps(trend.to_json(by, buckets), indent=2))
+    else:
+        print(trend.render_text(by, buckets))
+    return 0
+
+
+def cmd_diff(args) -> int:
+    root, cfg = _context(args)
+    try:
+        delta = prdiff.compute(root, cfg, args.base)
+    except gitutil.GitError:
+        print(f"grokmap diff: can't compare with '{args.base}'. Fetch it first (e.g. git fetch origin main).", file=sys.stderr)
+        return 2
+    if args.json:
+        print(json.dumps(prdiff.to_json(delta), indent=2))
+    elif args.markdown:
+        print(prdiff.render_markdown(delta))
+    else:
+        if not delta.ai:
+            print(f"grokmap diff vs {args.base}: {delta.human:,} lines added, none by AI.")
+        else:
+            print(
+                f"grokmap diff vs {args.base}: {delta.ai:,} AI-written lines added "
+                f"({', '.join(f'{k} {v:,}' for k, v in delta.tools.most_common())}), "
+                f"{delta.understood:,} understood, {delta.unread:,} nobody has checked."
+            )
+            for f in sorted(delta.files, key=lambda f: -f.unread):
+                if f.ai:
+                    print(f"  {f.path}: {f.ai} AI lines, {f.unread} unchecked")
+            if delta.unread:
+                print(f"Quiz yourself: grokmap quiz --diff {args.base}")
+    if args.max_unread is not None and delta.unread > args.max_unread:
+        return 1
     return 0
 
 
@@ -275,8 +316,22 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("-o", "--output")
     s.add_argument("--name", help="project name shown in the report")
     s.add_argument("--open", action="store_true", help="open it in a browser")
+    s.add_argument("--note", help="a line of text shown under the title (e.g. 'Demo data')")
     s.add_argument("--no-cache", action="store_true")
     s.set_defaults(func=cmd_report)
+
+    s = sub.add_parser("trend", help="AI-written vs human-written lines added over time")
+    s.add_argument("--by", choices=("auto", "week", "month"), default="auto")
+    s.add_argument("--since", help="only commits after this date, e.g. 2026-01-01 or '6 months ago'")
+    s.add_argument("--json", action="store_true")
+    s.set_defaults(func=cmd_trend)
+
+    s = sub.add_parser("diff", help="AI-written lines a branch adds, and how many are understood (for PRs)")
+    s.add_argument("--base", default="origin/main", help="branch to compare with (default: origin/main)")
+    s.add_argument("--markdown", action="store_true", help="markdown for a PR comment")
+    s.add_argument("--json", action="store_true")
+    s.add_argument("--max-unread", type=int, help="exit 1 when more AI lines than this are unchecked")
+    s.set_defaults(func=cmd_diff)
 
     s = sub.add_parser("badge", help="write an SVG README badge")
     s.add_argument("-o", "--output")

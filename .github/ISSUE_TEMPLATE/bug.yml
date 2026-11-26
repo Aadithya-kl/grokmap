@@ -1,0 +1,22 @@
+name: Bug report
+description: Something grokmap does wrong
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: grokmap version
+      description: Output of `grokmap --version`
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: The command you ran, what you expected and what you got. Paste the output.
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: OS, Python and git versions

@@ -128,7 +128,8 @@ def text_files_at_head(root: Path) -> set[str]:
     return files
 
 
-def scan_repo(root: Path, cfg: Config, use_cache: bool = True, progress=None) -> Scan:
+def scan_repo(root: Path, cfg: Config, use_cache: bool = True, progress=None, only: set[str] | None = None) -> Scan:
+    """Blame every included text file at HEAD (or just the paths in `only`)."""
     head = gitutil.head_sha(root)
     scan = Scan(root=root, head=head)
     if head is None:
@@ -140,7 +141,7 @@ def scan_repo(root: Path, cfg: Config, use_cache: bool = True, progress=None) ->
 
     todo = []
     for tf in gitutil.tracked_files(root):
-        if not cfg.is_included(tf.path):
+        if not cfg.is_included(tf.path) or (only is not None and tf.path not in only):
             continue
         if tf.path not in text_files:
             scan.skipped.append(tf.path)
@@ -201,5 +202,11 @@ def scan_repo(root: Path, cfg: Config, use_cache: bool = True, progress=None) ->
 
     if use_cache:
         keep_commits = {s: commit_cache[s] for s in shas if s in commit_cache}
-        _save_cache(root, {"version": CACHE_VERSION, "blame": new_blame, "commits": keep_commits})
+        if only is not None:
+            # partial scan: keep everything else we already knew
+            blame = {**blame_cache, **new_blame}
+            keep_commits = {**cache["commits"], **keep_commits}
+        else:
+            blame = new_blame
+        _save_cache(root, {"version": CACHE_VERSION, "blame": blame, "commits": keep_commits})
     return scan

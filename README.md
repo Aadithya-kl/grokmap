@@ -9,7 +9,12 @@
 ![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 ![license](https://img.shields.io/badge/license-MIT-lightgrey)
 
-<img src="docs/report-light.png" alt="grokmap report: 55% comprehension debt, a bar of every line by who understands it, and a treemap of files colored by debt" width="900">
+**[▶ Open the live demo](https://aadithya-kl.github.io/grokmap/)** · [Install](#install) · [Agent skill](#add-the-skill-to-your-coding-agent) · [CI and PR comments](#in-ci)
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/report-dark.png">
+  <img src="docs/report-light.png" alt="grokmap report: 35% comprehension debt, a bar of every line by who understands it, a weekly chart of who wrote the code, and a treemap of files colored by debt" width="900">
+</picture>
 
 </div>
 
@@ -23,21 +28,24 @@ That gap has a name: **comprehension debt**, the difference between how much cod
 
 ```
 $ grokmap status
-grokmap · shopcart @ 4f247c261b
+grokmap · shopcart @ c3088b29ff
 
-  Comprehension debt   54.9%
-  Lines scanned        257 in 13 files
-  Written by AI        220 lines (85.6%)  — claude 143, copilot 56, cursor 21
-    understood         51  (23%)
-    fading             0
-    skimmed            56
-    nobody checked     113
-  Understood by        alex@example.com (32), priya@example.com (19)
+  Comprehension debt   34.5%
+  Lines scanned        255 in 12 files
+  Written by AI        218 lines (85.5%)  — claude 141, copilot 56, cursor 21
+    understood         83  (38%)
+    fading             21
+    skimmed            73
+    nobody checked     41
+  Critical paths       40.7% debt over 86 lines
+  Understood by        alex@example.com (53), priya@example.com (51)
 
 Riskiest files                                         lines      AI  unread    debt
-src/shopcart/payments/client.py                           64      64      64    100%
-src/shopcart/reports.py                                   21      21      21    100%
-tests/test_pricing.py                                     17      17      17    100%
+src/shopcart/payments/client.py                           64      64      33     52%
+src/shopcart/api/routes.py                                33      33       0     50%
+src/shopcart/api/auth.py                                  23      23       0     50%
+
+Pay it down: ask your coding agent to run `grokmap quiz <file>` and quiz you.
 ```
 
 ## How you pay it down: your agent quizzes you
@@ -65,8 +73,10 @@ Understanding is tracked **per line**. If the agent later rewrites a line you we
 ## Install
 
 ```bash
-pipx install grokmap        # or: pip install grokmap, or run without installing: uvx grokmap status
+pipx install git+https://github.com/Aadithya-kl/grokmap
 ```
+
+Or try it without installing: `uvx --from git+https://github.com/Aadithya-kl/grokmap grokmap status`
 
 Python 3.11+ and git. No other dependencies, no network calls, nothing leaves your machine.
 
@@ -109,6 +119,8 @@ Commit `.grokmap/ledger.jsonl` so your whole team shares one map. It's one JSON 
 | `grokmap report [-o file] [--open]` | Self-contained HTML heatmap: a zoomable treemap, hover details, filterable file table, light and dark themes. |
 | `grokmap quiz [paths] [--uncommitted \| --staged \| --diff main]` | A quiz brief for your agent: the exact lines you haven't shown you understand, plus grading rules. |
 | `grokmap mark <files…> --score 0.8 [--method quiz\|explain\|review]` | Record understanding. `path:10-40` or `--lines` for line ranges, folders expand to their files. |
+| `grokmap diff [--base origin/main]` | The AI-written lines a branch adds and how many are understood. `--markdown` for a PR comment, `--max-unread N` to gate merges. |
+| `grokmap trend [--by week\|month]` | How much of the code added over time was written by each agent. |
 | `grokmap who <path>` | Who understands the AI-written code in a file or folder. |
 | `grokmap check [--max-debt 40] [--critical]` | Exits 1 above the limit. For CI. |
 | `grokmap badge` | An SVG badge for your README: ![comprehension debt badge](docs/badge-example.svg) |
@@ -119,6 +131,9 @@ Commit `.grokmap/ledger.jsonl` so your whole team shares one map. It's one JSON 
 ```yaml
 # .github/workflows/grokmap.yml
 on: [pull_request]
+permissions:
+  contents: read
+  pull-requests: write      # for the PR comment
 jobs:
   grokmap:
     runs-on: ubuntu-latest
@@ -126,13 +141,26 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0          # blame needs full history
-      - uses: Aadithya-kl/grokmap@v0
+      - uses: Aadithya-kl/grokmap@main
         with:
-          max-debt: 40            # leave out to only report
-          critical: true          # only enforce on paths listed as critical
+          max-debt: 40            # optional: fail above 40% debt
+          max-unread: 200         # optional: fail if the PR adds >200 unchecked AI lines
 ```
 
-The action writes a summary table to the job page, uploads the heatmap as an artifact, and exposes `debt` and `ai-lines` as outputs.
+On every pull request it posts **one comment** (and keeps it up to date) like this:
+
+> ### grokmap: comprehension check
+>
+> This change adds **5 AI-written lines** (claude 5) and 1 human-written line. **4 of the AI lines (80%)** have been understood by someone on the team.
+>
+> | File | AI lines | Understood | Not checked |
+> |---|---:|---:|---:|
+> | `src/shopcart/pricing.py` | 1 | 0 | 1 |
+> | `src/shopcart/loyalty.py` | 4 | 4 | 0 |
+>
+> Before merging, the author can ask their coding agent to run `grokmap quiz --diff origin/main` for a 2-minute quiz on the unchecked lines.
+
+It also writes the repo summary to the job page, uploads the heatmap as an artifact, and exposes `debt` and `ai-lines` as outputs. Everything is report-only unless you set a limit.
 
 ## How it works
 
@@ -152,6 +180,8 @@ The action writes a summary table to the job page, uploads the heatmap as an art
    Squash merges keep co-author trailers, so detection survives the usual GitHub workflow.
 3. **Understanding.** Each ledger record stores short hashes of the lines a person was quizzed on. A line is *understood* when someone passed a quiz on its current content, *skimmed* for a low score or a `review`, *fading* when the pass is older than `decay_days`.
 4. **Debt** = unread AI lines + ½ × (skimmed + fading) AI lines, divided by all meaningful lines.
+
+`grokmap trend` uses `git log --numstat` with the same detection, so you can see when AI started writing most of your code.
 
 Results are cached per file blob in `.grokmap/cache.json`. A 318,000-line repo with 3,000 files takes about 17 seconds the first time and about a second after that.
 
@@ -191,7 +221,13 @@ Lock files, build output, vendored code, minified files, media and binaries are 
 
 To *grok* is to understand something so thoroughly it becomes part of you. This is a map of what your team groks.
 
+## Roadmap
+
+Ideas the project wants help with are tracked as [issues](https://github.com/Aadithya-kl/grokmap/issues). The [good first issues](https://github.com/Aadithya-kl/grokmap/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) are small and well scoped. The biggest ones: an editor extension that colors understood and unread lines in the gutter, keeping understanding across file renames, and detection for more agents.
+
 ## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). The short version:
 
 ```bash
 git clone https://github.com/Aadithya-kl/grokmap && cd grokmap

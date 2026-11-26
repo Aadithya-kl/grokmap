@@ -20,7 +20,7 @@ jobs:
           python-version: "3.12"
       - run: python -m pip install build && python -m build
       - uses: pypa/gh-action-pypi-publish@release/v1
-      - name: Move the floating major tag (v0) so `uses: Aadithya-kl/grokmap@v0` gets this release
+      - name: "Move the floating major tag (v0) so `uses: Aadithya-kl/grokmap@v0` gets this release"
         run: |
           major="${GITHUB_REF_NAME%%.*}"
           git tag -f "$major" && git push -f origin "$major"

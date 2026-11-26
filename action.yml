@@ -18,6 +18,18 @@ inputs:
     description: Upload the HTML heatmap as a workflow artifact.
     required: false
     default: "true"
+  comment:
+    description: "On pull requests, post (and keep updating) one comment with the AI-written lines the PR adds and how many are understood. Needs the pull-requests write permission."
+    required: false
+    default: "true"
+  max-unread:
+    description: On pull requests, fail when the PR adds more than this many AI-written lines nobody has checked. Leave empty to only report.
+    required: false
+    default: ""
+  github-token:
+    description: Token used to post the PR comment.
+    required: false
+    default: ${{ github.token }}
   working-directory:
     description: Folder inside the repository to run in.
     required: false
@@ -71,6 +83,43 @@ runs:
       with:
         name: grokmap-report
         path: ${{ runner.temp }}/grokmap-report/index.html
+
+    - name: Summarize the pull request
+      id: pr
+      if: github.event_name == 'pull_request'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        BASE: ${{ github.base_ref }}
+      run: |
+        git rev-parse --verify -q "origin/$BASE" >/dev/null || git fetch --quiet origin "$BASE:refs/remotes/origin/$BASE"
+        grokmap diff --base "origin/$BASE" --markdown > "$RUNNER_TEMP/grokmap-pr.md"
+        cat "$RUNNER_TEMP/grokmap-pr.md" >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Comment on the pull request
+      if: github.event_name == 'pull_request' && inputs.comment == 'true' && steps.pr.outcome == 'success'
+      continue-on-error: true  # forks get a read-only token; the job summary still has the table
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        PR: ${{ github.event.pull_request.number }}
+      run: |
+        marker='<!-- grokmap:pr-summary -->'
+        id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
+              --jq ".[] | select((.body // \"\") | startswith(\"$marker\")) | .id" | head -n 1)
+        if [ -n "$id" ]; then
+          gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@"$RUNNER_TEMP/grokmap-pr.md" > /dev/null
+        else
+          gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -F body=@"$RUNNER_TEMP/grokmap-pr.md" > /dev/null
+        fi
+
+    - name: Enforce PR limit
+      if: github.event_name == 'pull_request' && inputs.max-unread != ''
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        BASE: ${{ github.base_ref }}
+      run: grokmap diff --base "origin/$BASE" --max-unread "${{ inputs.max-unread }}"
 
     - name: Enforce limit
       if: inputs.max-debt != ''

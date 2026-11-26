@@ -1,6 +1,9 @@
 """Build a small demo repository with a mix of human- and AI-written commits.
 
-    python scripts/make_demo.py /tmp/grokmap-demo
+    python scripts/make_demo.py /tmp/grokmap-demo [--with-ledger]
+
+--with-ledger also records a few quiz results (understood, skimmed, fading) and marks
+payments/ as a critical path, so the report shows every state. Used for the live demo.
 
 Used for the README screenshots and as an end-to-end fixture. Everything is fake.
 """
@@ -11,6 +14,7 @@ import os
 import subprocess
 import sys
 import textwrap
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 CLAUDE = "\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\n"
@@ -30,14 +34,14 @@ def write(repo: Path, path: str, body: str) -> None:
 
 def commit(repo: Path, msg: str, author=("Priya Raman", "priya@example.com"), day: int = 1) -> None:
     git(repo, "add", "-A")
-    date = f"2026-{9 + day // 28:02d}-{day % 28 + 1:02d}T10:00:00"
+    when = (date(2026, 7, 1) + timedelta(days=day * 6)).isoformat() + "T10:00:00"
     env = {
         "GIT_AUTHOR_NAME": author[0],
         "GIT_AUTHOR_EMAIL": author[1],
-        "GIT_AUTHOR_DATE": date,
+        "GIT_AUTHOR_DATE": when,
         "GIT_COMMITTER_NAME": author[0],
         "GIT_COMMITTER_EMAIL": author[1],
-        "GIT_COMMITTER_DATE": date,
+        "GIT_COMMITTER_DATE": when,
     }
     git(repo, "commit", "-q", "-m", msg, env=env)
 
@@ -469,9 +473,35 @@ def build(repo: Path) -> None:
     commit(repo, "Add tests for money and pricing" + CLAUDE, day=22)
 
 
+def add_ledger(repo: Path) -> None:
+    """Record a realistic mix of quiz results so every state shows up in the report."""
+    from grokmap.config import load_config
+    from grokmap.ledger import Record, append_records, load_ledger
+    from grokmap.quiz import mark
+
+    (repo / ".grokmap.toml").write_text('[grokmap]\ncritical = ["src/shopcart/payments/**"]\n', encoding="utf-8")
+    cfg = load_config(repo)
+    mark(repo, cfg, ["src/shopcart/payments/retry.py"], 0.83, "quiz", "priya@example.com", None)
+    mark(repo, cfg, ["src/shopcart/payments/client.py:1-40"], 1.0, "quiz", "priya@example.com", None)
+    mark(repo, cfg, ["src/shopcart/pricing.py"], 1.0, "explain", "alex@example.com", None)
+    mark(repo, cfg, ["src/shopcart/api"], 0.5, "review", "sam@example.com", None)
+    mark(repo, cfg, ["tests/test_pricing.py"], 0.4, "quiz", "sam@example.com", None)
+    # a pass from long ago: shows up as fading
+    old = datetime.now(UTC) - timedelta(days=240)
+    rec = mark(repo, cfg, ["src/shopcart/reports.py"], 0.9, "quiz", "alex@example.com", None)[0]
+    lines = (repo / ".grokmap" / "ledger.jsonl").read_text(encoding="utf-8").splitlines()[:-1]
+    (repo / ".grokmap" / "ledger.jsonl").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    append_records(repo, [Record(rec.path, rec.who, rec.score, rec.method, old, rec.hashes)])
+    assert len(load_ledger(repo)) >= 6
+    commit(repo, "Record grokmap quiz results", day=23)
+
+
 if __name__ == "__main__":
-    target = Path(sys.argv[1] if len(sys.argv) > 1 else "/tmp/grokmap-demo")
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    target = Path(args[0] if args else "/tmp/grokmap-demo")
     if target.exists() and any(target.iterdir()):
         sys.exit(f"{target} is not empty")
     build(target)
+    if "--with-ledger" in sys.argv:
+        add_ledger(target)
     print(f"demo repo ready at {target}")

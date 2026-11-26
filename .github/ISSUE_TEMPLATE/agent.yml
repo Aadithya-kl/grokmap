@@ -1,0 +1,25 @@
+name: Detect another coding agent
+description: grokmap misses (or mislabels) commits from an AI coding agent
+labels: [enhancement, good first issue]
+body:
+  - type: input
+    id: agent
+    attributes:
+      label: Agent
+      placeholder: e.g. Cline, Zed, Amp, OpenHands
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: An example commit
+      description: Link to a public commit, or paste its author line and full message (trailers included). Anonymize if needed.
+    validations:
+      required: true
+  - type: checkboxes
+    id: kind
+    attributes:
+      label: Problem
+      options:
+        - label: Not detected (should be AI)
+        - label: False positive (a human commit is marked as AI)

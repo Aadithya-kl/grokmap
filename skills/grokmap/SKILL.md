@@ -25,6 +25,8 @@ If none of those work, `uvx grokmap <command>` runs it without installing. In a 
 | just accepted a substantial change from you | Offer once, in one line: "Want a 2-minute quiz on this before you commit? It keeps grokmap's map honest." If they decline, drop it. |
 | asks how much of the code is understood, or where the risk is | `grokmap status`; for the visual map `grokmap report --open` |
 | asks who knows a part of the code | `grokmap who <path>` |
+| is about to open or merge a PR | `grokmap diff --base main` shows the AI lines the branch adds and how many are understood; offer a quiz on the unchecked ones |
+| asks how much of the code AI writes, or how that changed | `grokmap trend` |
 | wants it in CI | point them to the README's GitHub Action section, or run `grokmap check` |
 
 Do not offer a quiz after trivial edits (typos, renames, formatting, one-line config).
