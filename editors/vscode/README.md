@@ -11,8 +11,13 @@ Grok-map traces every line to the commit that wrote it, recognises commits made 
 Click the **Grok-map** icon in the activity bar. Or open it as an editor tab with the ↗ button.
 
 - **Pick any repository.** No need to open it as a folder first. Recent ones are one click away.
-- **See where you stand.** Shows how much of the AI-written code anyone understands and which files need attention. Click a file to open it, or quiz yourself on it. It also shows who understands what and which agents wrote the code.
-- **Get quizzed right there.** One question at a time, then a score with feedback and a good answer for each. The result is saved to the ledger for exactly the lines you were quizzed on, and the gutter updates.
+- **Install in one click.** No `grokmap` command yet? **Install for me** sets it up with uv or pip. New here? **Grok-map: Get started** walks you through it.
+- **See where you stand.** Shows how much of the AI-written code anyone understands and which files need attention. Click a file to open it, or quiz yourself on it. It also shows who understands what, which agents wrote the code, and how much of each week's new code came from AI.
+- **Get quizzed right there.** You see exactly which lines a quiz covers before it starts. Choose **Quick** (3 questions) or **Thorough** (4 to 6), or **Explain it instead** in a paragraph.
+  - One question at a time, with **Finish now** if you've had enough.
+  - Then a score with feedback and a good answer for each.
+  - The result is saved to the ledger for exactly those lines, and the gutter updates.
+  - **Commit to git** commits only the ledger, so your team sees it.
   - Questions are written and graded by the AI model you already have in VS Code, such as GitHub Copilot.
   - No API keys.
 - **No model in VS Code?** One click hands the quiz to Claude Code, Copilot Chat, Kilo Code, Cline, Roo Code or Cursor's chat. Your assistant asks the questions and records the score through Grok-map's MCP server.

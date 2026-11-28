@@ -8,6 +8,13 @@
   - **No folder to open first.** Pick any git repository from the panel; it remembers your recent ones.
   - **Dashboard:** how much of the AI-written code anyone understands, the files that need attention (click to open, one click to quiz), who understands what, and which agents wrote it. It follows the file you have open.
   - **Quizzes right in the panel.** One question at a time, then a score, per-question feedback and a good answer for each. The result is saved to the ledger for exactly the quizzed lines, and the gutter updates. Questions are written and graded by the AI model you already have in VS Code (for example GitHub Copilot), with no API keys. A score of 0 isn't recorded, so failed code stays unchecked rather than counting as skimmed.
+  - **A start screen before every quiz** shows exactly which files and lines it covers, with **Quick** (3 questions) or **Thorough** (4 to 6), and **Pick another file**. Nothing is sent to a model until you press Start.
+  - **Finish now** grades what you've answered; unanswered questions count as "I don't know". **Retake with new questions** from the result.
+  - **Explain it instead**: describe the code in a paragraph and get it graded, recorded as `--method explain`.
+  - **Commit to git** on the result commits only `.grokmap/ledger.jsonl` (never your other changes, and never pushes), so your team sees it.
+  - **New code by week**: a small chart of lines added by AI and by people, from `grokmap trend`.
+  - **Install for me**: no `grokmap` command yet? One click installs it with uv or pip and finds a command that runs it.
+  - **A welcome guide** (VS Code's Get started page) walks new users through install, picking a repository, a first quiz and sharing the result.
   - **No model? One-click hand-off** to Claude Code, Copilot Chat, Kilo Code, Cline, Roo Code or Cursor's chat: the quiz is copied (or filled in) and the assistant records your score through the MCP server.
   - Follows your light or dark theme, keyboard friendly, respects reduced motion.
 - "Quiz me" in hovers and menus now opens the panel quiz. The old copy-a-brief command is still there as **Grok-map: Copy a quiz brief for my AI assistant**.

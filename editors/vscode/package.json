@@ -71,6 +71,21 @@
         "icon": "$(refresh)"
       },
       {
+        "command": "grokmap.quizNobodyChecked",
+        "title": "Quiz me on code nobody checked",
+        "category": "Grok-map"
+      },
+      {
+        "command": "grokmap.installCli",
+        "title": "Install the Grok-map command-line tool",
+        "category": "Grok-map"
+      },
+      {
+        "command": "grokmap.welcome",
+        "title": "Get started",
+        "category": "Grok-map"
+      },
+      {
         "command": "grokmap.quiz",
         "title": "Quiz me on this file",
         "category": "Grok-map",
@@ -173,7 +188,61 @@
           "contextualTitle": "Grok-map"
         }
       ]
-    }
+    },
+    "walkthroughs": [
+      {
+        "id": "start",
+        "title": "Get started with Grok-map",
+        "description": "Find the AI-written code nobody on your team understands, and fix it with a 2-minute quiz.",
+        "steps": [
+          {
+            "id": "install",
+            "title": "Install the Grok-map tool",
+            "description": "Grok-map reads your git history with a small command-line tool. One click installs it with uv or pip.\n[Install for me](command:grokmap.installCli)",
+            "media": {
+              "markdown": "media/walkthrough/install.md"
+            },
+            "completionEvents": [
+              "onContext:grokmap.cliReady"
+            ]
+          },
+          {
+            "id": "repo",
+            "title": "Pick a repository",
+            "description": "Open the Grok-map panel and choose any git repository. It doesn't need to be open as a folder.\n[Choose a repository](command:grokmap.chooseRepo)",
+            "media": {
+              "markdown": "media/walkthrough/repo.md"
+            },
+            "completionEvents": [
+              "onCommand:grokmap.chooseRepo",
+              "onView:grokmap.panel"
+            ]
+          },
+          {
+            "id": "quiz",
+            "title": "Take your first quiz",
+            "description": "Three questions on code an AI wrote. Questions are written and graded by the AI model you already have in VS Code, or by your coding assistant.\n[Quiz me on code nobody checked](command:grokmap.quizNobodyChecked)",
+            "media": {
+              "markdown": "media/walkthrough/quiz.md"
+            },
+            "completionEvents": [
+              "onContext:grokmap.quizDone"
+            ]
+          },
+          {
+            "id": "share",
+            "title": "Share it with your team",
+            "description": "Your result is saved in .grokmap/ledger.jsonl. Commit it (the panel has a button) and the whole team's gutter turns green for that code.",
+            "media": {
+              "markdown": "media/walkthrough/share.md"
+            },
+            "completionEvents": [
+              "onContext:grokmap.quizDone"
+            ]
+          }
+        ]
+      }
+    ]
   },
   "scripts": {
     "compile": "tsc -p .",

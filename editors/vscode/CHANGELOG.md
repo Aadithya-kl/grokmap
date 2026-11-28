@@ -4,6 +4,9 @@
 
 - **Grok-map panel**: click the Grok-map icon in the activity bar (or open it in an editor tab). Pick any git repository without opening it as a folder, see how much AI-written code anyone understands, which files need attention and who understands what.
 - **Quizzes in the panel**, written and graded by the AI model you already have in VS Code (such as GitHub Copilot). Results are saved to the ledger and the gutter updates.
+- **Start screen** with the exact files and lines, **Quick** or **Thorough**, and **Pick another file**. **Finish now**, **Retake**, and **Explain it instead**.
+- **Commit to git** on the result commits only the ledger, never pushes.
+- **New code by week** chart, **Install for me** for the command-line tool, and a **Get started** guide.
 - **No model?** One click hands the quiz to Claude Code, Copilot Chat, Kilo Code, Cline, Roo Code or Cursor's chat.
 
 ## 0.6.2

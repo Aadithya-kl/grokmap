@@ -1,3 +1,4 @@
+import { execFile } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as vscode from "vscode";
@@ -6,23 +7,33 @@ import type { FileData } from "./model";
 import {
   Assistant,
   Dashboard,
+  Depth,
   Grade,
   Question,
   QuizJson,
   QuizTarget,
+  TrendJson,
+  TrendView,
   availableAssistants,
   averageScore,
+  commitMessage,
   dashboard,
+  enforceBlanks,
+  explainPrompt,
   gradePrompt,
   handoffPrompt,
+  isBlank,
   markArgs,
   parseJsonReply,
   questionCount,
   questionPrompt,
   rangesText,
+  readExplainGrade,
   readGrades,
   readQuestions,
+  toolName,
   totalLines,
+  trendView,
   verdict,
 } from "./panelModel";
 
@@ -32,10 +43,38 @@ const PASS_SCORE = 0.7;
 
 type Phase = "norepo" | "loading" | "nocli" | "error" | "ready";
 
+type Mode = "quiz" | "explain";
+
+let channel: vscode.OutputChannel | undefined;
+function output(): vscode.OutputChannel {
+  return (channel ??= vscode.window.createOutputChannel("Grok-map setup"));
+}
+
+function git(args: string[], cwd: string): Promise<string> {
+  return new Promise((resolve, reject) =>
+    execFile("git", args, { cwd, timeout: 60_000, windowsHide: true }, (err, stdout, stderr) => {
+      if (err) {
+        (err as Error & { stderr?: string }).stderr = stderr;
+        reject(err);
+      } else resolve(stdout);
+    }),
+  );
+}
+
 interface QuizState {
   scope: string; // file path, or "" for the whole repository
   title: string;
-  phase: "loading" | "nothing" | "choose" | "asking" | "grading" | "done" | "error";
+  phase: "loading" | "start" | "nothing" | "choose" | "asking" | "explain" | "grading" | "done" | "error";
+  files?: { path: string; span: string; lines: number; tools: string[] }[];
+  truncated?: boolean;
+  depth?: Depth;
+  mode?: Mode;
+  counts?: { quick: number; thorough: number };
+  hasModel?: boolean;
+  explanation?: string;
+  missing?: string[];
+  canCommit?: boolean;
+  committed?: string;
   message?: string;
   lines?: number;
   span?: string;
@@ -67,6 +106,8 @@ export interface ViewState {
   active?: ActiveFile;
   quiz?: QuizState;
   assistants: { id: string; name: string }[];
+  trend?: TrendView;
+  install?: { phase: "running" | "failed"; message: string };
   error?: string;
   command: string;
   updated?: string;
@@ -233,9 +274,14 @@ export class GrokmapPanel implements vscode.WebviewViewProvider {
     const repo = { path: repoPath, name: path.basename(repoPath) };
     this.set({ ...base, phase: this.state.dash && this.state.repo?.path === repoPath ? "ready" : "loading", repo });
     try {
+      const trend = run(["trend", "--json"], repoPath, undefined, 180_000)
+        .then((t) => trendView(JSON.parse(t) as TrendJson))
+        .catch(() => undefined);
       const out = await run(["status", "--json"], repoPath, undefined, 180_000);
       const dash = dashboard(JSON.parse(out));
-      this.set({ phase: "ready", dash, error: undefined, updated: new Date().toISOString() });
+      this.set({ phase: "ready", dash, error: undefined, install: undefined, updated: new Date().toISOString() });
+      void vscode.commands.executeCommand("setContext", "grokmap.cliReady", true);
+      this.set({ trend: await trend });
       await this.followEditor();
     } catch (err) {
       if (isMissing(err)) this.set({ phase: "nocli", error: undefined });
@@ -295,12 +341,33 @@ export class GrokmapPanel implements vscode.WebviewViewProvider {
       case "quiz":
         await this.startQuiz(String(m.path ?? ""));
         break;
+      case "begin":
+        await this.begin(m.depth === "thorough" ? "thorough" : "quick", m.mode === "explain" ? "explain" : "quiz");
+        break;
       case "answers":
         await this.grade((m.answers as string[]) ?? []);
         break;
+      case "explanation":
+        await this.gradeExplanation(String(m.text ?? ""));
+        break;
+      case "retake":
+        if (this.state.quiz) await this.startQuiz(this.state.quiz.scope);
+        break;
+      case "commitLedger":
+        await this.commitLedger();
+        break;
+      case "installCli":
+        await this.installCli();
+        break;
+      case "showLog":
+        output().show();
+        break;
       case "pickModel":
         await this.context.globalState.update("grokmap.model", String(m.id));
-        if (this.state.quiz) await this.startQuiz(this.state.quiz.scope);
+        if (this.state.quiz) {
+          const picked = (await this.models()).find((x) => x.id === String(m.id));
+          this.setQuiz({ model: picked?.name ?? this.state.quiz.model });
+        }
         break;
       case "handoff":
         await this.handoff(String(m.id));
@@ -347,10 +414,12 @@ export class GrokmapPanel implements vscode.WebviewViewProvider {
     await this.startQuiz(rel);
   }
 
-  /** Start a quiz on a file (repository-relative path), or on the whole repository with "". */
+  /**
+   * Open the start screen for a quiz on a file (repository-relative path), or on the code nobody
+   * has checked across the repository with "". Nothing is sent to a model until the person starts.
+   */
   async startQuiz(scope: string): Promise<void> {
-    const repo = this.state.repo?.path;
-    if (!repo) {
+    if (!this.state.repo) {
       await this.load();
       if (!this.state.repo) return;
     }
@@ -366,31 +435,56 @@ export class GrokmapPanel implements vscode.WebviewViewProvider {
         this.setQuiz({ phase: "nothing", message: undefined });
         return;
       }
-      const span = q.targets.length === 1 ? `lines ${rangesText(q.targets[0].ranges)}` : `${q.targets.length} files`;
-      this.setQuiz({ lines: totalLines(q.targets), span, title: q.targets.length === 1 ? path.basename(q.targets[0].path) : title });
-
       const models = await this.models();
-      if (!models.length) {
-        this.setQuiz({ phase: "choose", message: undefined });
-        return;
-      }
       const preferred = this.context.globalState.get<string>("grokmap.model");
       const model = models.find((x) => x.id === preferred) ?? models[0];
+      const depth = this.context.globalState.get<Depth>("grokmap.depth", "quick");
       this.setQuiz({
-        model: model.name,
+        phase: "start",
+        message: undefined,
+        title: q.targets.length === 1 ? path.basename(q.targets[0].path) : title,
+        lines: totalLines(q.targets),
+        span: q.targets.length === 1 ? `lines ${rangesText(q.targets[0].ranges)}` : `${q.targets.length} files`,
+        files: q.targets.map((t) => ({ path: t.path, span: rangesText(t.ranges), lines: Object.keys(t.lines).length, tools: t.tools.map(toolName) })),
+        truncated: q.truncated,
+        depth,
+        counts: { quick: questionCount(q.targets, "quick"), thorough: questionCount(q.targets, "thorough") },
+        hasModel: models.length > 0,
+        model: model?.name,
         models: models.map((x) => ({ id: x.id, name: x.name })),
-        message: "Reading the code and writing your questions…",
       });
-      const n = questionCount(q.targets);
-      const reply = await this.ask(model, questionPrompt(q.targets, n));
-      const questions = readQuestions(parseJsonReply(reply), n);
-      this.setQuiz({ phase: "asking", questions, answers: questions.map(() => ""), message: undefined });
     } catch (err) {
       if (err instanceof vscode.CancellationError) return;
       if (isMissing(err)) {
         this.set({ phase: "nocli", quiz: undefined });
         return;
       }
+      this.quizFailed(err);
+    }
+  }
+
+  /** The person pressed Start on the start screen. */
+  private async begin(depth: Depth, mode: Mode): Promise<void> {
+    const quiz = this.state.quiz;
+    if (!quiz || !this.targets.length) return;
+    await this.context.globalState.update("grokmap.depth", depth);
+    const model = await this.model();
+    if (!model) {
+      this.setQuiz({ phase: "choose", depth, mode });
+      return;
+    }
+    if (mode === "explain") {
+      this.setQuiz({ phase: "explain", depth, mode, model: model.name, grades: undefined, answers: undefined });
+      return;
+    }
+    this.setQuiz({ phase: "loading", depth, mode, model: model.name, message: "Reading the code and writing your questions…" });
+    try {
+      const n = questionCount(this.targets, depth);
+      const reply = await this.ask(model, questionPrompt(this.targets, n));
+      const questions = readQuestions(parseJsonReply(reply), n);
+      this.setQuiz({ phase: "asking", questions, answers: questions.map(() => ""), message: undefined });
+    } catch (err) {
+      if (err instanceof vscode.CancellationError) return;
       this.quizFailed(err);
     }
   }
@@ -406,38 +500,75 @@ export class GrokmapPanel implements vscode.WebviewViewProvider {
     });
   }
 
+  /** Grade the answers. Unanswered questions (finishing early, "I don't know") score 0. */
   private async grade(answers: string[]): Promise<void> {
     const quiz = this.state.quiz;
     if (!quiz?.questions || !this.targets.length) return;
-    this.setQuiz({ phase: "grading", answers, message: "Grading your answers…" });
+    const full = quiz.questions.map((_, i) => answers[i] ?? "");
+    this.setQuiz({ phase: "grading", answers: full, message: "Grading your answers…" });
     try {
-      const models = await this.models();
-      const model = models.find((x) => x.name === quiz.model) ?? models[0];
-      if (!model) {
-        this.setQuiz({ phase: "choose" });
-        return;
+      let grades: Grade[];
+      if (full.every(isBlank)) {
+        grades = full.map(() => ({ score: 0, feedback: "Not answered.", answer: "" }));
+      } else {
+        const model = await this.model();
+        if (!model) {
+          this.setQuiz({ phase: "choose" });
+          return;
+        }
+        const reply = await this.ask(model, gradePrompt(this.targets, quiz.questions, full));
+        grades = enforceBlanks(readGrades(parseJsonReply(reply), quiz.questions.length), full);
       }
-      const reply = await this.ask(model, gradePrompt(this.targets, quiz.questions, answers));
-      const grades = readGrades(parseJsonReply(reply), quiz.questions.length);
-      const score = averageScore(grades);
-      const v = verdict(score, PASS_SCORE);
-      this.setQuiz({ phase: "done", grades, score, verdict: v, message: undefined });
-      // the ledger counts any record below the pass score as skimmed, so a zero isn't recorded
-      if (score > 0) await this.record(score, model.name);
-      else this.setQuiz({ saved: "Nothing was recorded, so this code still counts as unchecked." });
+      await this.finish(grades, "quiz");
     } catch (err) {
       if (err instanceof vscode.CancellationError) return;
       this.quizFailed(err);
     }
   }
 
-  private async record(score: number, modelName: string): Promise<void> {
+  /** Grade a free-form explanation instead of quiz answers. */
+  private async gradeExplanation(text: string): Promise<void> {
+    const quiz = this.state.quiz;
+    if (!quiz || !this.targets.length) return;
+    const question = "Explain this code in your own words: what it does, why it's built this way, and how it can fail.";
+    this.setQuiz({ phase: "grading", explanation: text, message: "Reading your explanation…" });
+    try {
+      let g: Grade & { missing: string[] };
+      if (isBlank(text) || text.trim().length < 20) {
+        g = { score: 0, feedback: "That's too short to show you understand it.", answer: "", missing: [] };
+      } else {
+        const model = await this.model();
+        if (!model) {
+          this.setQuiz({ phase: "choose" });
+          return;
+        }
+        g = readExplainGrade(parseJsonReply(await this.ask(model, explainPrompt(this.targets, text))), text);
+      }
+      this.setQuiz({ questions: [{ question, lines: rangesText(this.targets[0].ranges), topic: "" }], answers: [text], missing: g.missing });
+      await this.finish([g], "explain");
+    } catch (err) {
+      if (err instanceof vscode.CancellationError) return;
+      this.quizFailed(err);
+    }
+  }
+
+  private async finish(grades: Grade[], method: Mode): Promise<void> {
+    const score = averageScore(grades);
+    this.setQuiz({ phase: "done", grades, score, verdict: verdict(score, PASS_SCORE), message: undefined, saved: undefined, committed: undefined, canCommit: false });
+    // the ledger counts any record below the pass score as skimmed, so a zero isn't recorded
+    if (score > 0) await this.record(score, this.state.quiz?.model ?? "VS Code's AI", method);
+    else this.setQuiz({ saved: "Nothing was recorded, so this code still counts as unchecked." });
+  }
+
+  private async record(score: number, modelName: string, method: Mode): Promise<void> {
     const repo = this.state.repo?.path;
     if (!repo) return;
+    const how = method === "quiz" ? "quiz" : "explanation";
     try {
-      await run(markArgs(this.targets, score, `quiz in the VS Code panel, graded by ${modelName}`), repo);
+      await run(markArgs(this.targets, score, `${how} in the VS Code panel, graded by ${modelName}`, method), repo);
       const lines = totalLines(this.targets);
-      this.setQuiz({ saved: `Saved to .grokmap/ledger.jsonl for ${lines} line${lines === 1 ? "" : "s"}. Commit it so your team sees it.` });
+      this.setQuiz({ saved: `Saved to the ledger for ${lines} line${lines === 1 ? "" : "s"}.`, canCommit: true });
+      void vscode.commands.executeCommand("setContext", "grokmap.quizDone", true);
       await vscode.commands.executeCommand("grokmap.refresh");
       await this.load();
     } catch (err) {
@@ -445,12 +576,39 @@ export class GrokmapPanel implements vscode.WebviewViewProvider {
     }
   }
 
+  /** Commit only the ledger, so the team sees the result. Never pushes. */
+  private async commitLedger(): Promise<void> {
+    const repo = this.state.repo?.path;
+    const quiz = this.state.quiz;
+    if (!repo || !quiz?.canCommit) return;
+    const ledger = ".grokmap/ledger.jsonl";
+    try {
+      await git(["add", "--", ledger], repo);
+      const message = commitMessage(this.targets, quiz.mode ?? "quiz", quiz.score ?? 0);
+      await git(["commit", "-m", message, "--", ledger], repo);
+      const sha = (await git(["rev-parse", "--short", "HEAD"], repo)).trim();
+      const branch = (await git(["rev-parse", "--abbrev-ref", "HEAD"], repo)).trim();
+      this.setQuiz({ committed: `Committed ${sha} on ${branch}. Push it with your next change so your team sees it.`, canCommit: false });
+    } catch (err) {
+      const text = errorText(err);
+      this.setQuiz({
+        committed: /nothing to commit|no changes added/i.test(text) ? "The ledger is already committed." : `Couldn't commit: ${text.split("\n").slice(-2).join(" ")}`,
+        canCommit: false,
+      });
+    }
+  }
+
+  private async model(): Promise<vscode.LanguageModelChat | undefined> {
+    const models = await this.models();
+    const preferred = this.context.globalState.get<string>("grokmap.model");
+    return models.find((x) => x.id === preferred) ?? models.find((x) => x.name === this.state.quiz?.model) ?? models[0];
+  }
+
   private async models(): Promise<vscode.LanguageModelChat[]> {
     if (!vscode.lm?.selectChatModels) return [];
     try {
       const all = await vscode.lm.selectChatModels();
-      // prefer capable general models; keep the user's order otherwise
-      return all.filter((m) => !/embedding|mini-?fast/i.test(m.id));
+      return all.filter((m) => !/embedding/i.test(m.id));
     } catch {
       return [];
     }
@@ -467,6 +625,69 @@ export class GrokmapPanel implements vscode.WebviewViewProvider {
     let text = "";
     for await (const part of res.text) text += part;
     return text;
+  }
+
+  // ------------------------------------------------------------ setup
+
+  /** Install the grokmap CLI with uv or pip, then find a command that runs it. */
+  async installCli(): Promise<void> {
+    if (this.state.install?.phase === "running") return;
+    const log: string[] = [];
+    const step = (message: string) => this.set({ install: { phase: "running", message } });
+    const tryRun = (exe: string, args: string[], timeout = 300_000) =>
+      new Promise<{ ok: boolean; out: string }>((resolve) =>
+        execFile(exe, args, { timeout, windowsHide: true, maxBuffer: 16 * 1024 * 1024 }, (err, so, se) => {
+          const out = `${so ?? ""}${se ?? ""}`.trim();
+          log.push(`$ ${exe} ${args.join(" ")}`, out);
+          resolve({ ok: !err, out });
+        }),
+      );
+    step("Looking for uv or Python…");
+    const candidates: string[] = [];
+    let installed = false;
+    if ((await tryRun("uv", ["--version"], 20_000)).ok) {
+      step("Installing Grok-map with uv…");
+      installed = (await tryRun("uv", ["tool", "install", "--upgrade", "grokmap"])).ok;
+      candidates.push("grokmap", "uvx grokmap");
+    }
+    if (!installed) {
+      const pythons = process.platform === "win32" ? ["py", "python", "python3"] : ["python3", "python"];
+      for (const py of pythons) {
+        if (!(await tryRun(py, ["--version"], 20_000)).ok) continue;
+        step(`Installing Grok-map with pip (${py})…`);
+        let r = await tryRun(py, ["-m", "pip", "install", "--user", "--upgrade", "grokmap"]);
+        if (!r.ok && /externally.managed/i.test(r.out) && (await tryRun("pipx", ["--version"], 20_000)).ok) {
+          step("Installing Grok-map with pipx…");
+          r = await tryRun("pipx", ["install", "--force", "grokmap"]);
+        }
+        installed = r.ok;
+        candidates.push("grokmap", `${py} -m grokmap`);
+        break;
+      }
+    }
+    output().appendLine(log.join("\n"));
+    if (!candidates.length) {
+      this.set({ install: { phase: "failed", message: "Grok-map needs Python 3.11 or newer, or uv. Install one of them, then try again." } });
+      return;
+    }
+    step("Checking it runs…");
+    for (const c of [...new Set(candidates)]) {
+      const [exe, ...pre] = c.split(" ");
+      if ((await tryRun(exe, [...pre, "--version"], 120_000)).ok) {
+        if (c !== this.command()) await config().update("command", c, vscode.ConfigurationTarget.Global);
+        this.set({ install: undefined });
+        await this.load();
+        return;
+      }
+    }
+    this.set({
+      install: {
+        phase: "failed",
+        message: installed
+          ? "Grok-map installed, but VS Code can't find the command. Restart VS Code, or set Grok-map: Command in settings."
+          : "The install didn't work. The details are in the Grok-map output panel.",
+      },
+    });
   }
 
   // ------------------------------------------------------------ hand-off

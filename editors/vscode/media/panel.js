@@ -105,15 +105,18 @@
   }
 
   function noCli() {
+    const inst = state.install;
+    if (inst && inst.phase === "running") {
+      return `<div class="card thinking fade-in"><div class="orb"></div><div><div style="font-weight:600">${esc(inst.message)}</div><div class="muted small">This takes under a minute</div></div></div>`;
+    }
     return `<div class="card fade-in">
       <h3>One-time setup</h3>
-      <p style="margin:0 0 4px">Grok-map reads your git history with a small command-line tool. Install it once:</p>
+      <p style="margin:0 0 12px">Grok-map reads your git history with a small command-line tool. Install it with one click (uses uv or pip):</p>
+      ${inst && inst.phase === "failed" ? `<div class="saved" style="margin:0 0 12px;color:var(--fg)"><span>${esc(inst.message)} <a data-act="showLog">Show details</a></span></div>` : ""}
+      <button class="btn primary block" data-act="installCli">Install for me</button>
+      <p class="note" style="margin-top:14px">Or run it yourself, then press <a data-act="refresh">Refresh</a>:</p>
       <div class="code"><span>pip install grokmap</span><button class="icon-btn" data-act="copy" data-text="pip install grokmap" title="Copy">${ICON.copy}</button></div>
-      <div class="row" style="margin-top:12px">
-        <button class="btn primary grow" data-act="refresh">I've installed it</button>
-        <button class="btn" data-act="useUvx" title="Runs it with uv, without installing">Use uvx instead</button>
-      </div>
-      <p class="note">Already installed somewhere else? Set the path in <a data-act="settings">Grok-map settings</a>. Now using <span class="mono">${esc(state.command)}</span>.</p>
+      <p class="note">Installed somewhere else? Set the path in <a data-act="settings">Grok-map settings</a>, or <a data-act="useUvx">run it with uvx</a>. Now using <span class="mono">${esc(state.command)}</span>.</p>
     </div>`;
   }
 
@@ -165,7 +168,7 @@
     const risky = d.risky.length
       ? `<div class="card fade-in"><h3>Needs attention<span class="aside">${plural(d.risky.length + d.riskyMore, "file")}</span></h3><div class="files">${d.risky
           .map(
-            (f) => `<div class="file" tabindex="0" data-act="openFile" data-path="${esc(f.path)}" title="${esc(f.path)}">
+            (f) => `<div class="file has-actions" tabindex="0" data-act="openFile" data-path="${esc(f.path)}" title="${esc(f.path)}">
               <div class="grow"><div class="name ellipsis">${esc(f.name)}</div><div class="dir ellipsis">${esc(f.dir || "/")}</div></div>
               <div class="count"><b>${fmt(f.open)}</b> / ${fmt(f.ai)}</div>
               <div class="actions"><button class="btn sm" data-act="quiz" data-path="${esc(f.path)}">${ICON.quiz} Quiz</button><button class="btn sm ghost" data-act="openFile" data-path="${esc(f.path)}" title="Open">${ICON.open}</button></div>
@@ -185,7 +188,38 @@
     const tools = d.tools.length
       ? `<div class="card fade-in"><h3>Written by</h3><div class="chips">${d.tools.map((t) => `<span class="chip">${esc(t.name)}<span class="n">${fmt(t.lines)}</span></span>`).join("")}</div></div>`
       : "";
-    return `${hero}<div class="grid"><div>${breakdown}${activeCard()}</div><div>${risky}${people}${tools}</div></div>`;
+    return `${hero}<div class="grid"><div>${breakdown}${activeCard()}${trendCard()}</div><div>${risky}${people}${tools}</div></div>`;
+  }
+
+  function trendCard() {
+    const t = state.trend;
+    if (!t) return "";
+    const max = Math.max(1, ...t.periods.map((p) => p.ai + p.human));
+    const unit = t.by === "month" ? "month" : "week";
+    const cols = t.periods
+      .map((p) => {
+        const total = p.ai + p.human;
+        const tip = `${t.by === "month" ? "" : "Week of "}${p.label}: ${fmt(p.ai)} lines by AI, ${fmt(p.human)} by people${total ? ` (${Math.round((100 * p.ai) / total)}% AI)` : ""}`;
+        return `<div class="tcol" data-tip="${esc(tip)}" tabindex="0" aria-label="${esc(tip)}">
+          <div class="tstack" style="height:${((100 * total) / max).toFixed(1)}%">
+            ${p.human ? `<i class="t-people" style="flex:${p.human}"></i>` : ""}${p.ai ? `<i class="t-ai" style="flex:${p.ai}"></i>` : ""}
+          </div></div>`;
+      })
+      .join("");
+    const first = t.periods[0].label;
+    const last = t.periods[t.periods.length - 1].label;
+    return `<div class="card fade-in">
+      <h3>New code by ${unit}<span class="aside">${pct(t.aiPct)} by AI</span></h3>
+      <div class="tchart" role="img" aria-label="Lines added per ${unit}: ${fmt(t.ai)} by AI and ${fmt(t.human)} by people over the last ${t.periods.length} ${unit}s">${cols}</div>
+      <div class="taxis"><span>${esc(first)}</span><span>${esc(last)}</span></div>
+      <div class="legend" style="grid-template-columns:1fr 1fr">
+        <div><span class="sw t-ai"></span><span>AI</span><span class="n">${fmt(t.ai)}</span></div>
+        <div><span class="sw t-people"></span><span>People</span><span class="n">${fmt(t.human)}</span></div>
+      </div>
+      <table class="sr-only"><caption>Lines added per ${unit}</caption><tr><th>${unit}</th><th>AI</th><th>People</th></tr>${t.periods
+        .map((p) => `<tr><td>${esc(p.label)}</td><td>${p.ai}</td><td>${p.human}</td></tr>`)
+        .join("")}</table>
+    </div>`;
   }
 
   function activeCard() {
@@ -218,6 +252,10 @@
     if (q.phase === "loading" || q.phase === "grading") {
       body = `<div class="card thinking fade-in"><div class="orb"></div><div><div style="font-weight:600">${esc(q.message || "Working…")}</div><div class="muted small">${q.model ? `Using ${esc(q.model)}` : "This takes a few seconds"}</div></div></div>
         ${q.phase === "loading" ? `<div class="card"><div class="skel" style="height:10px;width:30%"></div><div class="skel" style="height:15px;margin-top:12px"></div><div class="skel" style="height:15px;width:70%;margin-top:7px"></div><div class="skel" style="height:90px;margin-top:14px"></div></div>` : ""}`;
+    } else if (q.phase === "start") {
+      body = startView(q);
+    } else if (q.phase === "explain") {
+      body = explainView(q);
     } else if (q.phase === "nothing") {
       body = `<div class="card result fade-in">${ring(100, 96, "covered", "All of it understood")}
         <h2>Nothing left to quiz</h2><p>You've already shown you understand every AI-written line here.</p>
@@ -234,6 +272,62 @@
       body = done(q);
     }
     return head + body;
+  }
+
+  function startView(q) {
+    const depth = local.depth || q.depth || "quick";
+    const files = q.files || [];
+    const shown = files.slice(0, 4);
+    const models = q.models || [];
+    return `<div class="card fade-in">
+      <h3>You'll be quizzed on</h3>
+      <div class="files">${shown
+        .map(
+          (f) => `<div class="file" tabindex="0" data-act="openFile" data-path="${esc(f.path)}" title="Open ${esc(f.path)}">
+            <div class="grow"><div class="name ellipsis">${esc(f.path.split("/").pop())}</div><div class="dir ellipsis">${esc(f.path.includes("/") ? f.path.slice(0, f.path.lastIndexOf("/")) : "/")} · lines ${esc(f.span)}</div></div>
+            <div class="count"><b>${fmt(f.lines)}</b> lines</div>
+          </div>`,
+        )
+        .join("")}</div>
+      ${files.length > shown.length ? `<div class="more">and ${plural(files.length - shown.length, "more file")}</div>` : ""}
+      ${q.truncated ? `<div class="more">Cut to the riskiest ${fmt(q.lines)} lines to keep it short. Quiz again afterwards for the rest.</div>` : ""}
+      ${files.length && files[0].tools && files[0].tools.length ? `<div class="more">Written by ${esc([...new Set(files.flatMap((f) => f.tools))].join(", "))}</div>` : ""}
+    </div>
+    <div class="card fade-in">
+      <h3>How deep?</h3>
+      <div class="seg" role="radiogroup" aria-label="Quiz length">
+        <button role="radio" aria-checked="${depth === "quick"}" class="${depth === "quick" ? "on" : ""}" data-act="depth" data-depth="quick"><b>Quick</b><span>${q.counts ? q.counts.quick : 3} questions</span><span>about 2 min</span></button>
+        <button role="radio" aria-checked="${depth === "thorough"}" class="${depth === "thorough" ? "on" : ""}" data-act="depth" data-depth="thorough"><b>Thorough</b><span>${q.counts ? q.counts.thorough : 5} questions</span><span>about 5 min</span></button>
+      </div>
+      <button class="btn primary block" style="margin-top:12px" data-act="begin" data-mode="quiz">${ICON.quiz} Start the quiz</button>
+      <div class="row" style="margin-top:8px">
+        <button class="btn grow" data-act="begin" data-mode="explain" title="Describe the code in a paragraph instead of answering questions">Explain it instead</button>
+        <button class="btn grow" data-act="closeQuiz">Pick another file</button>
+      </div>
+      ${
+        q.hasModel
+          ? models.length > 1
+            ? `<div class="model">Graded by <select id="model" aria-label="Model">${models.map((m) => `<option value="${esc(m.id)}" ${m.name === q.model ? "selected" : ""}>${esc(m.name)}</option>`).join("")}</select></div>`
+            : `<div class="model">Graded by ${esc(q.model || "VS Code's AI")}</div>`
+          : `<div class="model">No AI model in VS Code: you'll pick your coding assistant next.</div>`
+      }
+    </div>`;
+  }
+
+  function explainView(q) {
+    const key = `explain|${quizKey(q)}`;
+    if (local.key !== key) local = { key, index: 0, drafts: [""], depth: local.depth };
+    return `<div class="card qcard fade-in">
+        <div class="qnum">Explain it in your own words</div>
+        <div class="qtext">What does this code do, why is it built this way, and how could it fail?</div>
+        <div class="qmeta">${esc(q.span || "")} · a paragraph is plenty</div>
+        <textarea id="answer" style="min-height:170px" placeholder="For example: it retries a payment when the network fails, waiting longer each time so…" aria-label="Your explanation">${esc(local.drafts[0] || "")}</textarea>
+        <div class="qactions">
+          <button class="btn ghost" data-act="retake">Back</button>
+          <button class="btn primary" data-act="submitExplain">${ICON.check} Check my explanation</button>
+        </div>
+      </div>
+      <div class="model">Graded by ${esc(q.model || "VS Code's AI")}</div>`;
   }
 
   function chooseAssistant(q) {
@@ -265,7 +359,7 @@
     const i = Math.min(local.index, q.questions.length - 1);
     const item = q.questions[i];
     const last = i === q.questions.length - 1;
-    const models = q.models || [];
+    const answered = local.drafts.filter((d) => d && d.trim()).length;
     return `<div class="steps" aria-hidden="true">${q.questions.map((_, k) => `<i class="${k <= i ? "on" : ""}"></i>`).join("")}</div>
       <div class="card qcard fade-in">
         <div class="qnum">Question ${i + 1} of ${q.questions.length}${item.topic ? ` · ${esc(item.topic)}` : ""}</div>
@@ -275,11 +369,12 @@
         <div class="qactions">
           <span class="kbd">${navigator.platform.includes("Mac") ? "⌘" : "Ctrl"}+Enter to continue</span>
           ${i > 0 ? `<button class="btn ghost" data-act="prevQ">Back</button>` : ""}
+          ${!last && (answered > 0 || i > 0) ? `<button class="btn ghost" data-act="finishNow" title="Grade now; questions you haven't answered count as 'I don't know'">Finish now</button>` : ""}
           <button class="btn" data-act="skipQ">I don't know</button>
           <button class="btn primary" data-act="nextQ">${last ? `${ICON.check} Check my answers` : "Next"}</button>
         </div>
       </div>
-      ${models.length > 1 ? `<div class="model">Model <select id="model" aria-label="Model">${models.map((m) => `<option value="${esc(m.id)}" ${m.name === q.model ? "selected" : ""}>${esc(m.name)}</option>`).join("")}</select></div>` : q.model ? `<div class="model">Questions by ${esc(q.model)}</div>` : ""}`;
+      ${q.model ? `<div class="model">Questions by ${esc(q.model)}</div>` : ""}`;
   }
 
   function done(q) {
@@ -295,7 +390,13 @@
         ${ring(score, 108, "score", `Score ${score}%`)}
         <h2>${esc(titles[q.verdict] || "Done")}</h2><p>${esc(subs[q.verdict] || "")}</p>
         ${q.saved ? `<div class="saved">${ICON.check}<span>${esc(q.saved)}</span></div>` : `<div class="saved"><div class="orb" style="width:14px;height:14px"></div><span>Saving your result…</span></div>`}
+        ${q.committed ? `<div class="saved">${ICON.check}<span>${esc(q.committed)}</span></div>` : ""}
+        <div class="stack" style="margin-top:12px">
+          ${q.canCommit ? `<button class="btn primary block" data-act="commitLedger" title="Commits only .grokmap/ledger.jsonl. Nothing is pushed.">${ICON.check} Commit to git</button>` : ""}
+          <button class="btn block" data-act="retake">${q.verdict === "understood" ? "Quiz me again" : "Retake with new questions"}</button>
+        </div>
       </div>
+      ${q.missing && q.missing.length ? `<div class="card answer-card fade-in"><div class="ans-label" style="margin-top:0">What your explanation left out</div><ul class="missing">${q.missing.map((m) => `<li>${rich(m)}</li>`).join("")}</ul></div>` : ""}
       ${(q.questions || [])
         .map((item, i) => {
           const g = (q.grades || [])[i] || { score: 0, feedback: "", answer: "" };
@@ -303,8 +404,8 @@
           return `<div class="card answer-card fade-in">
             <div class="row" style="align-items:flex-start"><div class="q grow">${i + 1}. ${rich(item.question)}</div><span class="verdict ${cls}">${word}</span></div>
             ${g.feedback ? `<div class="ans">${rich(g.feedback)}</div>` : ""}
-            <div class="ans-label">Your answer</div><div class="ans yours">${esc((q.answers || [])[i] || "(no answer)")}</div>
-            ${g.answer ? `<div class="ans-label">A good answer</div><div class="ans">${rich(g.answer)}</div>` : ""}
+            <div class="ans-label">${q.mode === "explain" ? "Your explanation" : "Your answer"}</div><div class="ans yours">${esc((q.answers || [])[i] || "(no answer)")}</div>
+            ${g.answer ? `<div class="ans-label">${q.mode === "explain" ? "A good explanation" : "A good answer"}</div><div class="ans">${rich(g.answer)}</div>` : ""}
           </div>`;
         })
         .join("")}
@@ -336,7 +437,7 @@
       ta.addEventListener("keydown", (e) => {
         if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
           e.preventDefault();
-          act("nextQ");
+          act(state.quiz && state.quiz.phase === "explain" ? "submitExplain" : "nextQ");
         }
       });
       if (focusAnswer || !ta.value) ta.focus();
@@ -362,13 +463,29 @@
         }
         return;
       }
+      case "finishNow":
+        if (!q || !q.questions) return;
+        vscode.setState(local);
+        send("answers", { answers: q.questions.map((_, k) => local.drafts[k] || "") });
+        return;
+      case "depth":
+        local.depth = el.dataset.depth;
+        vscode.setState(local);
+        render();
+        return;
+      case "begin":
+        send("begin", { depth: local.depth || (q && q.depth) || "quick", mode: el.dataset.mode });
+        return;
+      case "submitExplain":
+        send("explanation", { text: local.drafts[0] || "" });
+        return;
       case "prevQ":
         local.index = Math.max(0, local.index - 1);
         vscode.setState(local);
         render();
         return;
       case "quiz":
-        local = { key: "", index: 0, drafts: [] };
+        local = { key: "", index: 0, drafts: [], depth: local.depth };
         vscode.setState(local);
         send("quiz", { path: el ? el.dataset.path || "" : "" });
         return;
@@ -403,6 +520,28 @@
       act("openFile", e.target);
     }
   });
+  // hover tooltip for the trend chart
+  const tip = document.createElement("div");
+  tip.className = "tip";
+  tip.setAttribute("role", "tooltip");
+  document.body.appendChild(tip);
+  const showTip = (el) => {
+    tip.textContent = el.dataset.tip;
+    const r = el.getBoundingClientRect();
+    tip.style.display = "block";
+    const w = tip.offsetWidth;
+    tip.style.left = `${Math.max(6, Math.min(window.innerWidth - w - 6, r.left + r.width / 2 - w / 2))}px`;
+    tip.style.top = `${r.top + window.scrollY - tip.offsetHeight - 8}px`;
+  };
+  const hideTip = () => (tip.style.display = "none");
+  app.addEventListener("mouseover", (e) => {
+    const el = e.target.closest(".tcol");
+    if (el) showTip(el);
+    else hideTip();
+  });
+  app.addEventListener("focusin", (e) => (e.target.classList && e.target.classList.contains("tcol") ? showTip(e.target) : hideTip()));
+  app.addEventListener("mouseleave", hideTip);
+
   window.addEventListener("message", (e) => {
     if (e.data && e.data.type === "state") {
       state = e.data.state;

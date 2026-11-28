@@ -82,9 +82,25 @@ export function activate(context: vscode.ExtensionContext): void {
       vscode.commands.registerCommand("grokmap.openPanelInEditor", () => panel?.openInEditor()),
       vscode.commands.registerCommand("grokmap.chooseRepo", () => panel?.chooseRepo()),
       vscode.commands.registerCommand("grokmap.refreshPanel", () => panel?.load()),
+      vscode.commands.registerCommand("grokmap.installCli", async () => {
+        await vscode.commands.executeCommand("grokmap.openPanel");
+        await panel?.installCli();
+      }),
+      vscode.commands.registerCommand("grokmap.quizNobodyChecked", async () => {
+        await vscode.commands.executeCommand("grokmap.openPanel");
+        await panel?.startQuiz("");
+      }),
+      vscode.commands.registerCommand("grokmap.welcome", () =>
+        vscode.commands.executeCommand("workbench.action.openWalkthrough", "aadithya-kl.grokmap#grokmap.start", false),
+      ),
       vscode.workspace.onDidChangeWorkspaceFolders(() => void panel?.load()),
       watcher.onDidChange(() => void panel?.load()),
     );
+  }
+  // show the welcome guide once, the first time the extension starts
+  if (context.globalState && !context.globalState.get<boolean>("grokmap.welcomed")) {
+    void context.globalState.update("grokmap.welcomed", true);
+    void vscode.commands.executeCommand("grokmap.welcome");
   }
   refreshVisible();
 }

@@ -166,9 +166,28 @@ export function totalLines(targets: QuizTarget[]): number {
   return targets.reduce((n, t) => n + Object.keys(t.lines).length, 0);
 }
 
-/** Same rule as the CLI's quiz brief: at least 3, one more per 80 lines, at most 6. */
-export function questionCount(targets: QuizTarget[], minimum = 3): number {
-  return Math.max(minimum, Math.min(6, 2 + Math.floor(totalLines(targets) / 80)));
+export type Depth = "quick" | "thorough";
+
+/**
+ * How many questions to ask. Thorough follows the CLI's quiz brief (one more per 80 lines,
+ * 4 to 6); quick is always 3.
+ */
+export function questionCount(targets: QuizTarget[], depth: Depth = "thorough"): number {
+  if (depth === "quick") return 3;
+  return Math.max(4, Math.min(6, 2 + Math.floor(totalLines(targets) / 80)));
+}
+
+/** An answer that should score 0 without asking the model. */
+export function isBlank(answer: string | undefined): boolean {
+  const a = (answer ?? "").trim().toLowerCase().replace(/[’']/g, "");
+  return !a || /^(i\s*)?(dont|do not) know\.?$|^idk\.?$|^no idea\.?$|^pass\.?$|^\?+$/.test(a);
+}
+
+/** Grades with unanswered questions forced to 0, whatever the model said. */
+export function enforceBlanks(grades: Grade[], answers: string[]): Grade[] {
+  return grades.map((g, i) =>
+    isBlank(answers[i]) ? { ...g, score: 0, feedback: g.feedback || "Not answered." } : g,
+  );
 }
 
 /** The code with line numbers, the way the quiz brief shows it. Cut at `maxChars`. */
@@ -238,6 +257,71 @@ export function gradePrompt(targets: QuizTarget[], questions: Question[], answer
   ].join("\n");
 }
 
+export function explainPrompt(targets: QuizTarget[], explanation: string): string {
+  return [
+    "A developer explained, in their own words, code that an AI wrote in their project. Grade how well they understand it.",
+    "A full score needs: what the code does, why it is built that way, and at least one edge case or failure mode.",
+    "Score 1 = all of that and correct; 0.5 = mostly right but missing the why or the edge cases; 0 = wrong, vague or empty.",
+    "Judge only against the code below. A fluent explanation that is wrong scores 0.",
+    "",
+    'Reply with JSON only, no prose and no code fence: {"score":0.5,"feedback":"one or two sentences to the developer","missing":["what they left out"],"answer":"a short model explanation"}',
+    "",
+    "The code:",
+    codeListing(targets),
+    "",
+    "Their explanation:",
+    explanation.trim() || "(empty)",
+  ].join("\n");
+}
+
+export function readExplainGrade(reply: unknown, explanation: string): Grade & { missing: string[] } {
+  const r = (reply ?? {}) as Record<string, unknown>;
+  const [g] = readGrades({ grades: [r] }, 1);
+  const missing = Array.isArray(r.missing) ? r.missing.map(str).filter(Boolean).slice(0, 5) : [];
+  return { ...(isBlank(explanation) || explanation.trim().length < 20 ? { ...g, score: 0 } : g), missing };
+}
+
+/** Commit message for the ledger after a quiz. */
+export function commitMessage(targets: QuizTarget[], method: "quiz" | "explain", score: number): string {
+  const files = targets.map((t) => t.path.split("/").pop());
+  const what = files.length <= 2 ? files.join(" and ") : `${files.length} files`;
+  const how = method === "quiz" ? "quiz" : "explanation";
+  return `grokmap: understanding of ${what} (${how}, ${Math.round(score * 100)}%)`;
+}
+
+// ---------------------------------------------------------------- trend
+
+export interface TrendJson {
+  by: string;
+  summary: { human: number; ai: number; ai_pct: number; tools: Record<string, number> };
+  periods: { start: string; human: number; tools: Record<string, number> }[];
+}
+
+export interface TrendView {
+  by: string;
+  ai: number;
+  human: number;
+  aiPct: number;
+  periods: { start: string; label: string; ai: number; human: number }[];
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** The last `max` periods of `grokmap trend --json`, with short labels. Undefined when empty. */
+export function trendView(t: TrendJson | undefined, max = 12): TrendView | undefined {
+  if (!t?.periods?.length) return undefined;
+  const periods = t.periods.slice(-max).map((p) => {
+    const ai = Object.values(p.tools ?? {}).reduce((a, b) => a + b, 0);
+    const [y, m, d] = p.start.split("-").map(Number);
+    const label = t.by === "month" ? `${MONTHS[(m || 1) - 1]} ${String(y).slice(2)}` : `${MONTHS[(m || 1) - 1]} ${d}`;
+    return { start: p.start, label, ai, human: p.human };
+  });
+  if (!periods.some((p) => p.ai + p.human > 0)) return undefined;
+  const ai = periods.reduce((n, p) => n + p.ai, 0);
+  const human = periods.reduce((n, p) => n + p.human, 0);
+  return { by: t.by, ai, human, aiPct: ai + human ? Math.round((100 * ai) / (ai + human)) : 0, periods };
+}
+
 /** Pull the first JSON object out of a model reply (it may wrap it in a fence or add a sentence). */
 export function parseJsonReply(text: string): unknown {
   const cleaned = text.replace(/```(?:json)?/gi, "");
@@ -290,14 +374,14 @@ export function verdict(score: number, passScore = 0.7): Verdict {
 }
 
 /** Arguments for `grokmap mark` that record the result for exactly the quizzed lines. */
-export function markArgs(targets: QuizTarget[], score: number, note: string): string[] {
+export function markArgs(targets: QuizTarget[], score: number, note: string, method: "quiz" | "explain" = "quiz"): string[] {
   return [
     "mark",
     ...targets.map((t) => `${t.path}:${rangesText(t.ranges)}`),
     "--score",
     score.toFixed(2),
     "--method",
-    "quiz",
+    method,
     "--note",
     note,
   ];

@@ -5,6 +5,12 @@ import {
   QuizTarget,
   availableAssistants,
   averageScore,
+  commitMessage,
+  enforceBlanks,
+  explainPrompt,
+  isBlank,
+  readExplainGrade,
+  trendView,
   codeListing,
   dashboard,
   gradePrompt,
@@ -82,10 +88,66 @@ test("code listing numbers the lines like the CLI brief", () => {
   assert.match(codeListing([target], 20), /cut here/);
 });
 
-test("question count follows the CLI rule", () => {
-  assert.equal(questionCount([target]), 3);
+test("question count: quick is 3, thorough scales from 4 to 6 with size", () => {
+  assert.equal(questionCount([target], "quick"), 3);
+  assert.equal(questionCount([target], "thorough"), 4);
   const big = { ...target, lines: Object.fromEntries(Array.from({ length: 400 }, (_, i) => [String(i + 1), "x = 1"])) };
-  assert.equal(questionCount([big]), 6);
+  assert.equal(questionCount([big], "quick"), 3);
+  assert.equal(questionCount([big], "thorough"), 6);
+});
+
+test("blank answers score 0 whatever the model says", () => {
+  for (const a of ["", "  ", "I don't know", "i dont know.", "IDK", "no idea", "?"]) assert.ok(isBlank(a), a);
+  assert.ok(!isBlank("It retries on errors"));
+  const g = enforceBlanks(
+    [
+      { score: 1, feedback: "", answer: "a" },
+      { score: 1, feedback: "ok", answer: "b" },
+    ],
+    ["", "It doubles the delay"],
+  );
+  assert.deepEqual(
+    g.map((x) => x.score),
+    [0, 1],
+  );
+  assert.equal(g[0].feedback, "Not answered.");
+});
+
+test("explain it instead: prompt, grade and a floor for one-liners", () => {
+  assert.match(explainPrompt([target], "It doubles x unless empty"), /Their explanation:\nIt doubles x unless empty/);
+  const g = readExplainGrade({ score: 1, feedback: "Good", missing: ["edge case", ""], answer: "x" }, "It returns 0 for empty input and doubles x otherwise, because…");
+  assert.equal(g.score, 1);
+  assert.deepEqual(g.missing, ["edge case"]);
+  assert.equal(readExplainGrade({ score: 1 }, "it works").score, 0);
+});
+
+test("commit message names the files and the score", () => {
+  assert.equal(commitMessage([target], "quiz", 0.83), "grokmap: understanding of retry.py (quiz, 83%)");
+  assert.equal(commitMessage([target, target, target], "explain", 0.5), "grokmap: understanding of 3 files (explanation, 50%)");
+});
+
+test("trend: last periods, AI summed across tools, short labels", () => {
+  const t = trendView(
+    {
+      by: "week",
+      summary: { human: 0, ai: 0, ai_pct: 0, tools: {} },
+      periods: [
+        { start: "2026-08-03", human: 10, tools: {} },
+        { start: "2026-08-10", human: 5, tools: { claude: 20, copilot: 5 } },
+        { start: "2026-08-17", human: 0, tools: { cursor: 15 } },
+      ],
+    },
+    2,
+  )!;
+  assert.deepEqual(
+    t.periods.map((p) => [p.label, p.ai, p.human]),
+    [
+      ["Aug 10", 25, 5],
+      ["Aug 17", 15, 0],
+    ],
+  );
+  assert.equal(t.aiPct, 89);
+  assert.equal(trendView({ by: "month", summary: { human: 0, ai: 0, ai_pct: 0, tools: {} }, periods: [] }), undefined);
 });
 
 test("prompts ask for JSON and carry the code and answers", () => {

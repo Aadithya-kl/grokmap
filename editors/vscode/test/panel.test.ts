@@ -118,6 +118,12 @@ test("panel: dashboard, in-panel quiz with a model, result recorded in the ledge
     const before = ready.dash.understood;
 
     t.send({ type: "quiz", path: file });
+    const start = await t.until((s) => s.quiz?.phase === "start", "the start screen");
+    assert.equal(prompts.length, 0, "nothing goes to the model before Start");
+    assert.ok(start.quiz.files.some((f: { path: string }) => f.path === file));
+    assert.equal(start.quiz.hasModel, true);
+
+    t.send({ type: "begin", depth: "quick", mode: "quiz" });
     const asking = await t.until((s) => s.quiz?.phase === "asking", "questions");
     assert.equal(asking.quiz.questions.length, 3);
     assert.equal(asking.quiz.model, "Fake model");
@@ -127,10 +133,52 @@ test("panel: dashboard, in-panel quiz with a model, result recorded in the ledge
     const done = await t.until((s) => s.quiz?.phase === "done" && !!s.quiz.saved && s.dash?.understood > before, "the saved result");
     assert.equal(done.quiz.score, 0.83);
     assert.equal(done.quiz.verdict, "understood");
-    assert.match(done.quiz.saved, /Saved to \.grokmap\/ledger\.jsonl/);
+    assert.match(done.quiz.saved, /^Saved to the ledger for \d+ lines\.$/);
+
+    // commit only the ledger, as the button does
+    fs.writeFileSync(path.join(t.repo, "unrelated.txt"), "not part of the commit\n");
+    t.send({ type: "commitLedger" });
+    const committed = await t.until((s) => !!s.quiz?.committed, "the commit");
+    assert.match(committed.quiz.committed, /^Committed [0-9a-f]+ on /);
+    const last = execFileSync("git", ["show", "--stat", "--format=%s", "HEAD"], { cwd: t.repo, encoding: "utf8" });
+    assert.match(last, /^grokmap: understanding of /);
+    assert.match(last, /\.grokmap\/ledger\.jsonl/);
+    assert.doesNotMatch(last, /unrelated/);
 
     const who = execFileSync(command.split(" ")[0], [...command.split(" ").slice(1), "who", file!], { cwd: t.repo, encoding: "utf8" });
     assert.match(who, /understands/);
+  } finally {
+    t.restore();
+  }
+});
+
+test("panel: explain it instead, graded and recorded as an explanation", { skip: !source || !file }, async () => {
+  const prompts: string[] = [];
+  const model = {
+    id: "fake",
+    name: "Fake model",
+    async sendRequest(messages: { content: string }[]) {
+      prompts.push(messages[0].content);
+      const reply = '{"score":1,"feedback":"Clear and complete.","missing":[],"answer":"It retries with backoff."}';
+      return { text: (async function* () { yield reply; })() };
+    },
+  };
+  const t = setup([model]);
+  try {
+    const { GrokmapPanel } = await import("../src/panel");
+    const panel = new GrokmapPanel(t.context as never, async () => undefined);
+    panel.resolveWebviewView(t.view as never);
+    await t.until((s) => s.phase === "ready", "the dashboard");
+    t.send({ type: "quiz", path: file });
+    await t.until((s) => s.quiz?.phase === "start", "the start screen");
+    t.send({ type: "begin", depth: "quick", mode: "explain" });
+    await t.until((s) => s.quiz?.phase === "explain", "the explain screen");
+    t.send({ type: "explanation", text: "It calls the payment client and retries on network errors with exponential backoff, so a flaky API doesn't fail the order." });
+    const done = await t.until((s) => s.quiz?.phase === "done" && !!s.quiz.saved, "the result");
+    assert.equal(done.quiz.score, 1);
+    assert.match(prompts[0], /Their explanation:/);
+    const ledger = fs.readFileSync(path.join(t.repo, ".grokmap", "ledger.jsonl"), "utf8");
+    assert.match(ledger, /"method": ?"explain"/);
   } finally {
     t.restore();
   }
@@ -144,6 +192,8 @@ test("panel: without a model it offers the hand-off and copies a brief", { skip:
     panel.resolveWebviewView(t.view as never);
     await t.until((s) => s.phase === "ready", "the dashboard");
     t.send({ type: "quiz", path: file });
+    await t.until((s) => s.quiz?.phase === "start" && s.quiz.hasModel === false, "the start screen");
+    t.send({ type: "begin", depth: "quick", mode: "quiz" });
     await t.until((s) => s.quiz?.phase === "choose", "the hand-off choice");
     t.send({ type: "handoff", id: "copy" });
     for (let i = 0; i < 100 && !t.clipboard.length; i++) await new Promise((r) => setTimeout(r, 50));
