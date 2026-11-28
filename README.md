@@ -1,6 +1,6 @@
 <div align="center">
 
-# grokmap
+# Grokmap
 
 **Find the AI-written code nobody on your team understands, and pay it down one short quiz at a time.**
 
