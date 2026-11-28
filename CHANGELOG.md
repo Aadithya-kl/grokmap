@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.3.1
+
+- Clearer MCP tool descriptions: when to use each tool, which sibling to use instead, and what it returns.
+- Listed on Glama and cursor.directory; OpenSSF Scorecard, CodeQL and a SECURITY.md describing what grokmap can touch.
+
 ## 0.3.0
 
 - **MCP server.** `uvx grokmap-mcp` (or `grokmap mcp` with `pip install "grokmap[mcp]"`) gives coding agents seven tools: `comprehension_risk`, `repo_status`, `who_understands`, `quiz_brief`, `record_understanding`, `pr_comprehension` and `ai_trend`, plus a `quiz_me` prompt. Agents can check how well a file is understood before they change it.

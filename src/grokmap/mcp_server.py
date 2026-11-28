@@ -72,8 +72,18 @@ def comprehension_risk(
     ],
     repo: RepoArg = None,
 ) -> dict:
-    """Call this BEFORE changing existing code. For each path: how much is AI-written, how much nobody has checked,
-    who understands it, a risk level (none, low, medium, high, very high) and advice on how carefully to proceed."""
+    """Rate how risky it is to change specific files or folders, based on how much of their AI-written code anyone
+    on the team has shown they understand.
+
+    When to use: before editing existing code in a non-trivial way. Follow the returned advice: at high or very high,
+    keep the diff small, explain the change, and offer a quiz afterwards. For the whole repository use repo_status;
+    to find a reviewer use who_understands.
+
+    Returns {"repo", "results": [...]}, one entry per path with: risk (none, low, medium, high, very high),
+    lines, ai, understood, skimmed, fading, unread, debt_pct, ai_pct, agents (lines per AI agent), understood_by
+    (person -> lines), critical_path, advice, and most_unread_files. A path that does not exist has found=false.
+    Lines count as AI-written when the commit that last changed them carries an AI agent's marker
+    (e.g. a Co-Authored-By: Claude trailer)."""
     return agent_tools.comprehension_risk(paths, repo)
 
 
@@ -83,8 +93,16 @@ def repo_status(
     top: Annotated[int, Field(description="How many of the riskiest files to list.", ge=1, le=50)] = 10,
     repo: RepoArg = None,
 ) -> dict:
-    """Whole-repository summary: comprehension debt %, share of AI-written lines by agent, who understands what,
-    and the riskiest files. Use when the user asks how much of the code is AI-written or where the risk is."""
+    """Summarize comprehension debt for the whole repository: how much code is AI-written, how much of that anyone
+    understands, and which files are riskiest.
+
+    When to use: the user asks how much of the code is AI-written, where the risk is, or for an overview. For
+    specific files you are about to change, use comprehension_risk instead; for change over time, use ai_trend.
+
+    Returns {"repo", "head", "risk", "total", "critical_paths", "riskiest_files"}. total and critical_paths hold
+    lines, human, ai, understood, skimmed, fading, unread, debt_pct, ai_pct, agents and understood_by.
+    riskiest_files lists up to `top` files with lines, ai_lines, unread, debt_pct and critical. Debt counts unread
+    AI-written lines in full and skimmed or fading ones (understood over 180 days ago) as half."""
     return agent_tools.repo_status(repo, top)
 
 
@@ -94,8 +112,14 @@ def who_understands(
     path: Annotated[str, Field(description="File or folder, relative to the repo root.")],
     repo: RepoArg = None,
 ) -> dict:
-    """Who has shown they understand the AI-written code at a path (from passed quizzes), plus who has been committing
-    to it lately. Use it to suggest reviewers or the right person to ask."""
+    """List the people who have shown they understand the AI-written code at a path, and who committed to it lately.
+
+    When to use: the user asks who knows this code, who should review a change, or whom to ask. For a risk rating
+    use comprehension_risk.
+
+    Returns {"path", "understood_by" (person -> lines they passed a quiz, explanation or review on), "ai_lines",
+    "unread" (AI-written lines nobody has checked), "recent_committers": [{"name", "commits"}], "note"}.
+    Committing code is not counted as understanding it: only recorded quizzes, explanations and reviews are."""
     return agent_tools.who_understands(path, repo)
 
 
@@ -114,8 +138,16 @@ def quiz_brief(
     max_lines: Annotated[int, Field(description="Cap on lines in the brief, to keep the quiz short.", ge=20, le=1000)] = 200,
     repo: RepoArg = None,
 ) -> dict:
-    """Get the exact lines the person has not yet shown they understand, with rules for running a short quiz:
-    ask 2 to 6 questions one at a time, grade 0 / 0.5 / 1, then call record_understanding with the given paths."""
+    """Build a quiz brief: the exact AI-written lines a person has not yet shown they understand, with rules for
+    quizzing them.
+
+    When to use: the user asks to be quizzed, or agrees to a quiz after you finished a change (uncommitted=true for
+    that change, diff_base='main' for a whole branch, paths for specific code). Ask 2 to 6 questions one at a time,
+    grade each 0, 0.5 or 1, then call record_understanding with record_with.paths and the mean grade.
+
+    Returns {"who", "nothing_to_quiz", "line_count", "truncated", "brief_markdown" (the code and quiz rules),
+    "record_with": {"tool", "paths", "method", "score"}}. If nothing_to_quiz is true, tell the person there is
+    nothing new for them to check. Read-only: nothing is recorded until you call record_understanding."""
     return agent_tools.quiz_brief(paths, uncommitted, diff_base, who, max_lines, repo)
 
 
@@ -135,8 +167,15 @@ def record_understanding(
     note: Annotated[str, Field(description="Optional short note stored with the record.")] = "",
     repo: RepoArg = None,
 ) -> dict:
-    """Record that a person showed they understand these lines. Only call this with a score the person earned by
-    answering. Lines changed later automatically count as not understood again."""
+    """Record in the shared ledger (.grokmap/ledger.jsonl) that a person showed they understand these lines.
+
+    When to use: only after the person actually answered a quiz from quiz_brief, explained the change back to you,
+    reviewed it, or paired on it, with the score they earned. Never record understanding because you or they wrote
+    the code, and never round scores up. This is the only tool that writes: it appends to the ledger and changes
+    nothing else. Lines edited later count as not understood again.
+
+    Returns {"recorded", "who", "score", "counts_as" (understood, or skimmed for low scores and reviews),
+    "files", "lines", "ledger" (its path), "reminder"}."""
     return agent_tools.record_understanding(paths, score, method, who, note, repo)
 
 
@@ -146,8 +185,14 @@ def pr_comprehension(
     base: Annotated[str, Field(description="Branch to compare with, e.g. 'origin/main' or 'main'.")] = "origin/main",
     repo: RepoArg = None,
 ) -> dict:
-    """For the current branch: how many AI-written lines it adds compared with base, which files, and how many anyone
-    understands. Includes a ready-to-post markdown summary."""
+    """Summarize a branch or pull request: the AI-written lines it adds compared with base and how many of them
+    anyone understands.
+
+    When to use: before opening or merging a pull request, or when asked how much of a branch is AI-written. For
+    the whole repository use repo_status. The base ref must exist locally (run git fetch if it is missing).
+
+    Returns {"base", "merge_base", "commits", "ai", "human", "understood", "unread", "tools" (AI lines per agent),
+    "files": [{"path", "ai", "human", "understood", "unread", "partial"}], "markdown" (a ready-to-post PR comment)}."""
     return agent_tools.pr_comprehension(base, repo)
 
 
@@ -158,7 +203,14 @@ def ai_trend(
     since: Annotated[str | None, Field(description="Only commits after this date, e.g. '2026-01-01' or '6 months ago'.")] = None,
     repo: RepoArg = None,
 ) -> dict:
-    """How much of the code added over time was written by each AI agent versus people."""
+    """Show how much of the code added over time was written by each AI agent versus people, per week or month.
+
+    When to use: the user asks how AI use has changed, which agents write the most code, or since when. For
+    today's totals use repo_status. Counts lines added in commits (from git log), attributed to an AI agent when
+    the commit carries its marker, e.g. a Co-Authored-By: Claude trailer or a Copilot bot author.
+
+    Returns {"by", "summary": {"human", "ai", "ai_pct", "tools" (lines per agent)},
+    "periods": [{"start", "human", "tools"}]}, oldest period first."""
     return agent_tools.ai_trend(by, since, repo)
 
 
