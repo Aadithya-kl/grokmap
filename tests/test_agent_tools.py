@@ -121,3 +121,15 @@ def test_all_version_numbers_agree():
     assert mcp_pkg["dependencies"] == [f"grokmap[mcp]=={grokmap.__version__}"]
     readme = (root / "packages/grokmap-mcp/README.md").read_text()
     assert re.search(rf"mcp-name: {re.escape(server['name'])}\s", readme)
+
+
+def test_every_mcp_tool_declares_an_output_schema():
+    import asyncio
+
+    from grokmap.mcp_server import server
+
+    tools = asyncio.run(server.list_tools())
+    assert len(tools) == 7
+    for t in tools:
+        assert t.output_schema, t.name
+        assert t.annotations is not None, t.name

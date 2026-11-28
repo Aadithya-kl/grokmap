@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "grokmap"
-version = "0.3.1"
+version = "0.4.0"
 description = "Measure comprehension debt: the AI-written code in your repo that nobody understands."
 readme = "README.md"
 license = "MIT"

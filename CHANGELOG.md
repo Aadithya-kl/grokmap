@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.4.0
+
+- **Structured output.** Every MCP tool declares an output schema and returns `structuredContent`, with a description on each field, so agents can read results without parsing text. The JSON text is still sent for older clients.
+- CI builds both packages, hands them to a second job and installs them there, the same way the release does.
+- GitHub Actions updated to their latest majors, pinned to commit SHAs.
+
 ## 0.3.1
 
 - Clearer MCP tool descriptions: when to use each tool, which sibling to use instead, and what it returns.

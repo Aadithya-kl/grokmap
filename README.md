@@ -150,7 +150,7 @@ Prefer Docker? `docker build -t grokmap-mcp .` in this repo, then use `docker ru
 
 [![grokmap MCP server – quality and maintenance score on Glama](https://glama.ai/mcp/servers/Aadithya-kl/grokmap/badges/card.svg?v=0.3.1)](https://glama.ai/mcp/servers/Aadithya-kl/grokmap)
 
-Plus a `quiz_me` prompt. Everything runs locally on your git history: no network calls, no API keys. Find it in the [official MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.Aadithya-kl/grokmap) (`io.github.Aadithya-kl/grokmap`), on [Glama](https://glama.ai/mcp/servers/Aadithya-kl/grokmap) and on [cursor.directory](https://cursor.directory/plugins/grokmap).
+Plus a `quiz_me` prompt. Every tool returns structured results with a published output schema, so agents read fields instead of parsing text. Everything runs locally on your git history: no network calls, no API keys. Find it in the [official MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.Aadithya-kl/grokmap) (`io.github.Aadithya-kl/grokmap`), on [Glama](https://glama.ai/mcp/servers/Aadithya-kl/grokmap) and on [cursor.directory](https://cursor.directory/plugins/grokmap).
 
 ## Quick start
 
