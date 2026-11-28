@@ -20,7 +20,7 @@ def test_install_writes_hook_and_respects_foreign_hooks(repo, capsys):
     assert "not written by grokmap" in capsys.readouterr().err
     assert main(["-C", root, "hook", "install", "--force"]) == 0
     text = hook.read_text()
-    assert "grokmap pre-push hook" in text and "-m grokmap hook run" in text
+    assert "grokmap pre-push hook" in text and "-m grokmap hook run" in text.replace("--block ", "")
     assert main(["-C", root, "hook", "uninstall"]) == 0
     assert not hook.exists()
 
@@ -39,13 +39,13 @@ def test_run_reminds_then_blocks(repo, capsys, monkeypatch):
     assert "AI-written line" in err and "b.py" in err and f"--diff {base}" in err
 
     monkeypatch.setattr("sys.stdin", __import__("io").StringIO(_push_input(repo, base)))
-    assert main(["-C", root, "hook", "run", "--block", "origin", "url"]) == 1
+    assert main(["-C", root, "hook", "--block", "run", "origin", "url"]) == 1
 
     # once the lines are understood, the push is quiet
     assert main(["-C", root, "mark", "b.py", "--who", "dev@example.com", "--score", "1"]) == 0
     capsys.readouterr()
     monkeypatch.setattr("sys.stdin", __import__("io").StringIO(_push_input(repo, base)))
-    assert main(["-C", root, "hook", "run", "--block", "origin", "url"]) == 0
+    assert main(["-C", root, "hook", "--block", "run", "origin", "url"]) == 0
     assert capsys.readouterr().err == ""
 
 

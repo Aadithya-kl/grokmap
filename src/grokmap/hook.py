@@ -37,7 +37,8 @@ def script(block: bool) -> str:
     return (
         "#!/bin/sh\n"
         f"{MARKER} (installed by `grokmap hook install`; remove with `grokmap hook uninstall`)\n"
-        f'exec "{_python()}" -m grokmap hook run {mode} "$@"\n'.replace("  ", " ")
+        # flags before the positionals: argparse before Python 3.12 can't mix them
+        f'exec "{_python()}" -m grokmap hook {mode} run "$@"\n'.replace("  ", " ")
     )
 
 
