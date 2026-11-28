@@ -165,3 +165,41 @@ critical = []
 [grokmap.ai_commits]
 # "3f2a9c1" = "claude"
 """
+
+
+def add_excludes(root: Path, globs: list[str], remove: bool = False) -> tuple[Path, list[str]]:
+    """Add (or remove) globs in the `exclude` list of `.grokmap.toml`, creating the file if needed.
+
+    Returns the config path and the resulting list. Raises ValueError when the configuration
+    lives in pyproject.toml, which we don't rewrite.
+    """
+    import json
+    import re
+
+    path = root / ".grokmap.toml"
+    if not path.exists():
+        pyproject = root / "pyproject.toml"
+        if pyproject.exists() and "grokmap" in tomllib.loads(pyproject.read_text(encoding="utf-8")).get("tool", {}):
+            raise ValueError(
+                "this repository keeps its Grok-map settings in pyproject.toml; add the paths to [tool.grokmap] exclude there"
+            )
+        path.write_text(DEFAULT_TOML, encoding="utf-8")
+    text = path.read_text(encoding="utf-8")
+    current = [str(g) for g in tomllib.loads(text).get("grokmap", {}).get("exclude", [])]
+    if remove:
+        updated = [g for g in current if g not in globs]
+    else:
+        updated = current + [g for g in globs if g not in current]
+    rendered = "exclude = [" + ", ".join(json.dumps(g) for g in updated) + "]"
+    section = re.search(r"(?m)^\[grokmap\]\s*$", text)
+    key = re.compile(r"(?ms)^exclude\s*=\s*\[.*?\]")
+    found = key.search(text, section.end() if section else 0)
+    if found:
+        text = text[: found.start()] + rendered + text[found.end() :]
+    elif section:
+        text = text[: section.end()] + "\n" + rendered + text[section.end() :]
+    else:
+        text = text.rstrip("\n") + "\n\n[grokmap]\n" + rendered + "\n"
+    tomllib.loads(text)  # never write a file we can't read back
+    path.write_text(text, encoding="utf-8")
+    return path, updated

@@ -272,6 +272,27 @@ def cmd_who(args) -> int:
     return 0
 
 
+def cmd_ignore(args) -> int:
+    from grokmap.config import add_excludes
+
+    root = gitutil.repo_root(Path(args.repo).resolve())
+    globs = []
+    for raw in args.paths:
+        p = raw.replace("\\", "/").removeprefix("./").rstrip("/")
+        globs.append(f"{p}/**" if (root / p).is_dir() and not p.endswith("/**") else p)
+    try:
+        path, updated = add_excludes(root, globs, remove=args.remove)
+    except ValueError as exc:
+        print(f"grokmap ignore: {exc}", file=sys.stderr)
+        return 2
+    verb = "no longer ignoring" if args.remove else "ignoring"
+    print(
+        f"grokmap: {verb} {', '.join(globs)} ({path.name} now excludes {len(updated)} pattern{'s' if len(updated) != 1 else ''})"
+    )
+    print(f"         commit {path.name} so your team skips {'them' if len(globs) > 1 else 'it'} too")
+    return 0
+
+
 def cmd_lines(args) -> int:
     from grokmap.lines import file_lines
     from grokmap.score import ranges
@@ -426,6 +447,11 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("who", help="who understands the AI-written code in a file or folder")
     s.add_argument("path")
     s.set_defaults(func=cmd_who)
+
+    s = sub.add_parser("ignore", help="leave files or folders out of Grok-map (adds them to exclude in .grokmap.toml)")
+    s.add_argument("paths", nargs="+", help="files or folders, relative to the repository root, or globs")
+    s.add_argument("--remove", action="store_true", help="stop ignoring them")
+    s.set_defaults(func=cmd_ignore)
 
     s = sub.add_parser("lines", help="per-line states for one file, as an editor sees it (used by the VS Code extension)")
     s.add_argument("path")

@@ -166,6 +166,8 @@ The [Grok-map extension](editors/vscode) adds a **Grok-map panel** to the sideba
 - **Repositories:** pick any repository without opening it as a folder.
 - **Dashboard:** how much of the AI-written code anyone understands, and the files that need attention.
 - **Quizzes:** take one right there. Questions are written and graded by the AI model you already have in VS Code (such as Copilot), and the result goes straight into the ledger.
+- **This branch:** the AI-written lines your branch adds that you haven't checked, with **Quiz me before I push**.
+- **Files or folders, code only:** see which areas nobody understands, with tests, docs and data left out by default. Hover a row to quiz, mark as reviewed, or ignore it.
 - **Hand-off:** with no model, one click passes the quiz to Claude Code, Copilot Chat, Kilo Code, Cline, Roo Code or Cursor.
 
 ![The Grok-map panel in VS Code](docs/vscode-panel.png)
@@ -204,6 +206,7 @@ Commit `.grokmap/ledger.jsonl` so your whole team shares one map. It's one JSON 
 | `grokmap init` | Adds config, ledger and `.gitattributes`. |
 | `grokmap lines FILE` | Per-line states for one file, as an editor sees it (`--json`, `--stdin` for unsaved text). Used by the VS Code extension. |
 | `grokmap hook install` | Pre-push reminder when you push AI-written lines nobody has checked (`--block` to stop the push instead). |
+| `grokmap ignore PATH…` | Leave files or folders out of Grok-map (adds them to `exclude` in `.grokmap.toml`; `--remove` undoes it). |
 | `grokmap mcp` | Runs the MCP server over stdio (needs `grokmap[mcp]`). |
 
 ## In CI

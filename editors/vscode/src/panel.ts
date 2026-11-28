@@ -14,8 +14,14 @@ import {
   QuizTarget,
   TrendJson,
   TrendView,
+  BranchView,
+  DiffJson,
+  StatusJson,
   availableAssistants,
   averageScore,
+  branchView,
+  codeOnly,
+  pickBase,
   commitMessage,
   dashboard,
   enforceBlanks,
@@ -59,6 +65,12 @@ function git(args: string[], cwd: string): Promise<string> {
       } else resolve(stdout);
     }),
   );
+}
+
+/** CLI arguments for a quiz scope: a path, "" for the whole repository, or "diff:<base>" for a branch. */
+function quizScopeArgs(scope: string): string[] {
+  if (scope.startsWith("diff:")) return ["--diff", scope.slice(5)];
+  return scope ? [scope] : [];
 }
 
 interface QuizState {
@@ -107,6 +119,8 @@ export interface ViewState {
   quiz?: QuizState;
   assistants: { id: string; name: string }[];
   trend?: TrendView;
+  branch?: BranchView;
+  codeOnly: boolean;
   install?: { phase: "running" | "failed"; message: string };
   error?: string;
   command: string;
@@ -122,13 +136,21 @@ export class GrokmapPanel implements vscode.WebviewViewProvider {
   private targets: QuizTarget[] = [];
   private cancel?: vscode.CancellationTokenSource;
   private loading?: Promise<void>;
+  private status?: StatusJson; // last `grokmap status --json`, so filters don't re-run the CLI
   private closed = false; // the person closed the repository: don't fall back to the open folder
 
   constructor(
     private readonly context: vscode.ExtensionContext,
     private readonly fileData: (uri: vscode.Uri) => Promise<FileData | undefined>,
   ) {
-    this.state = { phase: "loading", recent: [], workspace: [], assistants: [], command: this.command() };
+    this.state = {
+      phase: "loading",
+      recent: [],
+      workspace: [],
+      assistants: [],
+      command: this.command(),
+      codeOnly: context.globalState?.get<boolean>("grokmap.codeOnly", true) ?? true,
+    };
   }
 
   // ------------------------------------------------------------ webview plumbing
@@ -314,11 +336,12 @@ export class GrokmapPanel implements vscode.WebviewViewProvider {
       const trend = run(["trend", "--json"], repoPath, undefined, 180_000)
         .then((t) => trendView(JSON.parse(t) as TrendJson))
         .catch(() => undefined);
+      const branch = this.loadBranch(repoPath);
       const out = await run(["status", "--json"], repoPath, undefined, 180_000);
-      const dash = dashboard(JSON.parse(out));
-      this.set({ phase: "ready", dash, error: undefined, install: undefined, updated: new Date().toISOString() });
+      this.status = JSON.parse(out) as StatusJson;
+      this.set({ phase: "ready", dash: this.buildDash(), error: undefined, install: undefined, updated: new Date().toISOString() });
       void vscode.commands.executeCommand("setContext", "grokmap.cliReady", true);
-      this.set({ trend: await trend });
+      this.set({ trend: await trend, branch: await branch });
       await this.followEditor();
     } catch (err) {
       if (isMissing(err)) this.set({ phase: "nocli", error: undefined });
@@ -330,6 +353,77 @@ export class GrokmapPanel implements vscode.WebviewViewProvider {
           error: notGit ? `${repo.name} isn't a git repository. Choose the folder that contains .git.` : text.split("\n").slice(-3).join("\n"),
         });
       }
+    }
+  }
+
+  private buildDash(): Dashboard | undefined {
+    if (!this.status) return undefined;
+    if (!this.state.codeOnly) return { ...dashboard(this.status), codeOnly: false };
+    const c = codeOnly(this.status);
+    return { ...dashboard(c.status), codeOnly: true, hiddenFiles: c.hiddenFiles, hiddenAi: c.hiddenAi };
+  }
+
+  private async setCodeOnly(on: boolean): Promise<void> {
+    await this.context.globalState.update("grokmap.codeOnly", on);
+    this.state.codeOnly = on;
+    this.set({ dash: this.buildDash() });
+  }
+
+  /** AI-written lines this branch adds compared with its base, or undefined when there are none. */
+  private async loadBranch(repo: string): Promise<BranchView | undefined> {
+    try {
+      const name = (await git(["rev-parse", "--abbrev-ref", "HEAD"], repo)).trim();
+      if (!name || name === "HEAD") return undefined;
+      const refs = new Set(
+        (await git(["for-each-ref", "--format=%(refname:short)", "refs/heads", "refs/remotes/origin"], repo)).split(/\r?\n/).filter(Boolean),
+      );
+      const base = pickBase(name, (r) => refs.has(r));
+      if (!base) return undefined;
+      const out = await run(["diff", "--base", base, "--json"], repo, undefined, 180_000);
+      return branchView(name, JSON.parse(out) as DiffJson);
+    } catch {
+      return undefined;
+    }
+  }
+
+  /** Leave a file or folder out of Grok-map for the whole team (asks first). */
+  private async ignore(rel: string, folder: boolean): Promise<void> {
+    const repo = this.state.repo?.path;
+    if (!repo) return;
+    const what = folder ? `the folder ${rel}` : rel;
+    const ok = await vscode.window.showInformationMessage(
+      `Leave ${what} out of Grok-map?`,
+      { modal: true, detail: "It's added to exclude in .grokmap.toml, so it no longer counts anywhere. Commit that file so your team skips it too. Undo with: grokmap ignore --remove " + rel },
+      "Ignore",
+    );
+    if (ok !== "Ignore") return;
+    try {
+      await run(["ignore", rel], repo);
+      await this.load();
+    } catch (err) {
+      void vscode.window.showErrorMessage(`Grok-map couldn't ignore ${rel}: ${errorText(err)}`);
+    }
+  }
+
+  /** Record that the person reviewed a file or folder. Counts as skimmed, not understood (asks first). */
+  private async review(rel: string): Promise<void> {
+    const repo = this.state.repo?.path;
+    if (!repo) return;
+    const ok = await vscode.window.showInformationMessage(
+      `Record that you reviewed ${rel}?`,
+      {
+        modal: true,
+        detail: "A review counts as skimmed (half understood), not understood. To count fully, take a quiz. This adds a line to .grokmap/ledger.jsonl.",
+      },
+      "I reviewed it",
+    );
+    if (ok !== "I reviewed it") return;
+    try {
+      await run(["mark", rel, "--score", "0.5", "--method", "review", "--note", "marked as reviewed in the VS Code panel"], repo);
+      await vscode.commands.executeCommand("grokmap.refresh");
+      await this.load();
+    } catch (err) {
+      void vscode.window.showErrorMessage(`Grok-map couldn't record the review: ${errorText(err)}`);
     }
   }
 
@@ -365,6 +459,15 @@ export class GrokmapPanel implements vscode.WebviewViewProvider {
         break;
       case "chooseRepo":
         await this.chooseRepo();
+        break;
+      case "codeOnly":
+        await this.setCodeOnly(!!m.on);
+        break;
+      case "ignore":
+        await this.ignore(String(m.path), !!m.folder);
+        break;
+      case "review":
+        await this.review(String(m.path));
         break;
       case "switchRepo":
         await this.switchRepo();
@@ -465,10 +568,11 @@ export class GrokmapPanel implements vscode.WebviewViewProvider {
     }
     this.cancel?.cancel();
     this.targets = [];
-    const title = scope ? path.basename(scope) : "Code nobody has checked";
+    const diffBase = scope.startsWith("diff:") ? scope.slice(5) : undefined;
+    const title = diffBase ? "This branch" : scope ? path.basename(scope) : "Code nobody has checked";
     this.set({ quiz: { scope, title, phase: "loading", message: "Finding the code to quiz you on…" } });
     try {
-      const args = ["quiz", ...(scope ? [scope] : []), "--format", "json", "--max-lines", "160"];
+      const args = ["quiz", ...quizScopeArgs(scope), "--format", "json", "--max-lines", "160"];
       const q = JSON.parse(await run(args, this.state.repo!.path)) as QuizJson;
       this.targets = q.targets;
       if (!q.targets.length) {
@@ -482,7 +586,7 @@ export class GrokmapPanel implements vscode.WebviewViewProvider {
       this.setQuiz({
         phase: "start",
         message: undefined,
-        title: q.targets.length === 1 ? path.basename(q.targets[0].path) : title,
+        title: q.targets.length === 1 && !diffBase ? path.basename(q.targets[0].path) : title,
         lines: totalLines(q.targets),
         span: q.targets.length === 1 ? `lines ${rangesText(q.targets[0].ranges)}` : `${q.targets.length} files`,
         files: q.targets.map((t) => ({ path: t.path, span: rangesText(t.ranges), lines: Object.keys(t.lines).length, tools: t.tools.map(toolName) })),
@@ -742,7 +846,7 @@ export class GrokmapPanel implements vscode.WebviewViewProvider {
     if (!quiz || !repo) return;
     let brief: string;
     try {
-      brief = await run(["quiz", ...(quiz.scope ? [quiz.scope] : []), "--max-lines", "160"], repo);
+      brief = await run(["quiz", ...quizScopeArgs(quiz.scope), "--max-lines", "160"], repo);
     } catch (err) {
       this.setQuiz({ phase: "error", message: errorText(err) });
       return;

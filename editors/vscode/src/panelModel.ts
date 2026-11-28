@@ -52,6 +52,11 @@ export interface Dashboard {
   tools: { name: string; lines: number }[];
   risky: RiskyFile[];
   riskyMore: number; // files with open lines beyond the ones listed
+  folders: Folder[];
+  foldersMore: number;
+  codeOnly?: boolean;
+  hiddenFiles?: number; // AI-touched files hidden by "code only"
+  hiddenAi?: number;
 }
 
 const TOOL_NAMES: Record<string, string> = {
@@ -108,9 +113,168 @@ export function riskyFiles(status: StatusJson, limit = 8): { list: RiskyFile[]; 
   return { list: all.slice(0, limit), more: Math.max(0, all.length - limit) };
 }
 
+export type FileKind = "code" | "test" | "docs" | "data" | "generated";
+
+const GENERATED = /(^|\/)(vendor|third_party|node_modules|dist|build|out|target|\.next|coverage)\/|\.min\.(js|css)$|\.pb\.go$|_pb2(_grpc)?\.pyi?$|\.g\.dart$|\.generated\.|(^|\/)generated\/|\.lock$|-lock\.(json|yaml)$/i;
+const TEST =
+  /(^|\/)(tests?|__tests__|__mocks__|specs?|testdata|test_data|fixtures?|e2e|testing)\/|(^|\/)test_[^/]*$|_test\.[a-z0-9]+$|\.(test|spec)\.[a-z0-9]+$|(^|\/)conftest\.py$|Tests?\.(cs|java|kt|swift)$/i;
+const DOCS = /\.(md|mdx|rst|txt|adoc|org)$|(^|\/)(docs?|documentation)\/|(^|\/)(README|CHANGELOG|LICENSE|CONTRIBUTING|SECURITY|CODE_OF_CONDUCT)[^/]*$/i;
+const DATA = /\.(json|jsonl|ya?ml|toml|ini|cfg|conf|csv|tsv|xml|svg|lock|env|properties|plist|snap)$/i;
+
+/** What kind of file this is, from its path alone. Only "code" counts when the dashboard shows code only. */
+export function fileKind(path: string): FileKind {
+  if (GENERATED.test(path)) return "generated";
+  if (TEST.test(path)) return "test";
+  if (DOCS.test(path)) return "docs";
+  if (DATA.test(path)) return "data";
+  return "code";
+}
+
+function addStats(into: Stats, s: Stats): void {
+  for (const k of ["lines", "human", "ai", "understood", "fading", "skimmed", "unread"] as const) into[k] += s[k] ?? 0;
+  into.debt_lines = (into.debt_lines ?? 0) + (s.debt_lines ?? s.unread + 0.5 * (s.skimmed + s.fading));
+  for (const [k, v] of Object.entries(s.tools ?? {})) into.tools[k] = (into.tools[k] ?? 0) + v;
+  for (const [k, v] of Object.entries(s.people ?? {})) into.people[k] = (into.people[k] ?? 0) + v;
+}
+
+function emptyStats(): Stats {
+  return { lines: 0, human: 0, ai: 0, understood: 0, fading: 0, skimmed: 0, unread: 0, debt_lines: 0, debt_pct: 0, tools: {}, people: {} };
+}
+
+/** Totals for a set of files, with debt computed the same way the CLI does. */
+export function sumStats(files: Stats[]): Stats {
+  const t = emptyStats();
+  for (const s of files) addStats(t, s);
+  t.debt_pct = t.lines ? Math.round((1000 * (t.debt_lines ?? 0)) / t.lines) / 10 : 0;
+  t.ai_pct = t.lines ? Math.round((1000 * t.ai) / t.lines) / 10 : 0;
+  return t;
+}
+
+/** The status with only code files (no tests, docs, data or generated files). */
+export function codeOnly(status: StatusJson): { status: StatusJson; hiddenFiles: number; hiddenAi: number } {
+  const files: Record<string, Stats> = {};
+  let hiddenFiles = 0;
+  let hiddenAi = 0;
+  for (const [p, s] of Object.entries(status.files ?? {})) {
+    if (fileKind(p) === "code") files[p] = s;
+    else if (s.ai > 0) {
+      hiddenFiles++;
+      hiddenAi += s.ai;
+    }
+  }
+  return { status: { ...status, files, total: sumStats(Object.values(files)) }, hiddenFiles, hiddenAi };
+}
+
+export interface Folder {
+  path: string;
+  name: string;
+  dir: string;
+  files: number;
+  ai: number;
+  open: number;
+  understood: number;
+  fading: number;
+  skimmed: number;
+  unread: number;
+}
+
+/**
+ * Group files with open lines into folders, at the shallowest depth that gives a useful split:
+ * the first depth (1 to 4) with at least 4 folders, or the deepest tried.
+ */
+export function folders(status: StatusJson, limit = 8): { list: Folder[]; more: number; depth: number } {
+  const entries = Object.entries(status.files ?? {}).filter(([p, s]) => openLines(s) > 0 && p.includes("/"));
+  let best: Map<string, Stats[]> = new Map();
+  let depth = 1;
+  for (depth = 1; depth <= 4; depth++) {
+    const groups = new Map<string, Stats[]>();
+    for (const [p, s] of entries) {
+      const parts = p.split("/").slice(0, -1);
+      const key = parts.slice(0, Math.min(depth, parts.length)).join("/");
+      (groups.get(key) ?? groups.set(key, []).get(key)!).push(s);
+    }
+    best = groups;
+    if (groups.size >= 4) break;
+  }
+  const list: Folder[] = [...best.entries()].map(([p, files]) => {
+    const t = sumStats(files);
+    const slash = p.lastIndexOf("/");
+    return {
+      path: p,
+      name: p.slice(slash + 1),
+      dir: slash >= 0 ? p.slice(0, slash) : "",
+      files: files.length,
+      ai: t.ai,
+      open: openLines(t),
+      understood: t.understood,
+      fading: t.fading,
+      skimmed: t.skimmed,
+      unread: t.unread,
+    };
+  });
+  const weight = (f: Folder) => f.unread + 0.5 * f.skimmed + 0.5 * f.fading;
+  list.sort((a, b) => weight(b) - weight(a) || a.path.localeCompare(b.path));
+  return { list: list.slice(0, limit), more: Math.max(0, list.length - limit), depth: Math.min(depth, 4) };
+}
+
+/** What `grokmap diff --json` prints. */
+export interface DiffJson {
+  base: string;
+  commits: number;
+  ai: number;
+  human: number;
+  understood: number;
+  unread: number;
+  tools: Record<string, number>;
+  files: { path: string; ai: number; human: number; understood: number; unread: number; partial: number }[];
+}
+
+export interface BranchView {
+  name: string;
+  base: string;
+  commits: number;
+  ai: number;
+  understood: number;
+  open: number;
+  files: { path: string; name: string; ai: number; open: number }[];
+}
+
+export function branchView(name: string, d: DiffJson): BranchView | undefined {
+  if (!d || !d.ai) return undefined;
+  return {
+    name,
+    base: d.base,
+    commits: d.commits,
+    ai: d.ai,
+    understood: d.understood,
+    open: Math.max(0, d.ai - d.understood),
+    files: d.files
+      .filter((f) => f.ai > 0)
+      .sort((a, b) => b.ai - b.understood - (a.ai - a.understood))
+      .slice(0, 5)
+      .map((f) => ({ path: f.path, name: f.path.split("/").pop() ?? f.path, ai: f.ai, open: Math.max(0, f.ai - f.understood) })),
+  };
+}
+
+/**
+ * Which branch to compare with: on a feature branch, the default branch (remote first);
+ * on the default branch itself, its remote copy (so unpushed work shows up).
+ */
+export function pickBase(current: string, exists: (ref: string) => boolean): string | undefined {
+  const defaults = ["main", "master", "trunk", "develop"];
+  if (defaults.includes(current)) {
+    const remote = `origin/${current}`;
+    return exists(remote) ? remote : undefined;
+  }
+  for (const b of defaults) if (exists(`origin/${b}`)) return `origin/${b}`;
+  for (const b of defaults) if (exists(b)) return b;
+  return undefined;
+}
+
 export function dashboard(status: StatusJson, limit = 8): Dashboard {
   const t = status.total;
   const { list, more } = riskyFiles(status, limit);
+  const f = folders(status, limit);
   return {
     repo: status.repo,
     lines: t.lines,
@@ -127,6 +291,8 @@ export function dashboard(status: StatusJson, limit = 8): Dashboard {
     tools: sortedEntries(t.tools).map(([name, lines]) => ({ name: toolName(name), lines })),
     risky: list,
     riskyMore: more,
+    folders: f.list,
+    foldersMore: f.more,
   };
 }
 

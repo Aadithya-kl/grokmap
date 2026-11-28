@@ -26,6 +26,9 @@
     open: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M4 1.5h5.5L13 5v9.5H4z"/><path d="M9.5 1.5V5H13"/></svg>',
     check: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 8.5 3.2 3L13 4.5"/></svg>',
     copy: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="5" width="8.5" height="8.5" rx="1.5"/><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5"/></svg>',
+    eyeOff: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 2l12 12"/><path d="M6.6 3.6A6.9 6.9 0 0 1 8 3.5c3.6 0 6 4.5 6 4.5a11 11 0 0 1-1.8 2.3M4.1 4.9C2.8 6 2 8 2 8s2.4 4.5 6 4.5c1 0 1.9-.3 2.7-.7"/></svg>',
+    eye: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8s2.4-4.5 6-4.5S14 8 14 8s-2.4 4.5-6 4.5S2 8 2 8Z"/><circle cx="8" cy="8" r="1.8"/></svg>',
+    branch: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="4.5" cy="3.5" r="1.5"/><circle cx="4.5" cy="12.5" r="1.5"/><circle cx="11.5" cy="5.5" r="1.5"/><path d="M4.5 5v6M11.5 7c0 2.5-2 3-5 4"/></svg>',
     folder: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M1.5 4a1 1 0 0 1 1-1h3.6l1.5 1.6h5.9a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V4Z"/></svg>',
   };
 
@@ -158,24 +161,39 @@
       </div>
     </div>`;
     const breakdown = `<div class="card fade-in">
-      <h3>AI-written code<span class="aside">${pct(d.aiPct)} of the repository</span></h3>
+      <h3>AI-written code<button class="toggle ${d.codeOnly ? "on" : ""}" role="switch" aria-checked="${!!d.codeOnly}" data-act="codeOnly" title="Leave out tests, docs, data and generated files"><span class="knob"></span>Code only</button></h3>
       ${stateBar(d)}${legend(d)}
+      <div class="more">${pct(d.aiPct)} of ${d.codeOnly ? "the code" : "the repository"} was written by AI${
+        d.codeOnly && d.hiddenFiles ? ` · hiding ${plural(d.hiddenFiles, "test, doc or data file")}` : ""
+      }</div>
       <div class="cta">
         <button class="btn primary block" data-act="quiz" data-path="" ${nobody ? "" : "disabled"}>${ICON.quiz} Quiz me on code nobody checked</button>
         <div class="hint">About 2 minutes · 3 to 6 questions</div>
       </div>
     </div>`;
+    const view = local.attn === "folders" ? "folders" : "files";
+    const rows = view === "folders" ? d.folders : d.risky;
+    const more = view === "folders" ? d.foldersMore : d.riskyMore;
+    const rowHtml = (f) => {
+      const folder = view === "folders";
+      const sub = folder ? `${f.dir ? esc(f.dir) + " · " : ""}${plural(f.files, "file")}` : esc(f.dir || "/");
+      return `<div class="file has-actions" tabindex="0" data-act="${folder ? "quiz" : "openFile"}" data-path="${esc(f.path)}" title="${esc(f.path)}${folder ? "/" : ""}">
+        <div class="grow"><div class="name ellipsis">${folder ? `${ICON.folder} ` : ""}${esc(f.name)}${folder ? "/" : ""}</div><div class="dir ellipsis">${sub}</div></div>
+        <div class="count"><b>${fmt(f.open)}</b> / ${fmt(f.ai)}</div>
+        <div class="actions">
+          <button class="btn sm" data-act="quiz" data-path="${esc(f.path)}" title="Quiz me on ${folder ? "this folder" : "this file"}">${ICON.quiz} Quiz</button>
+          <button class="btn sm ghost" data-act="review" data-path="${esc(f.path)}" title="I reviewed it (counts as half understood)" aria-label="Mark as reviewed">${ICON.eye}</button>
+          <button class="btn sm ghost" data-act="ignore" data-path="${esc(f.path)}" data-folder="${folder ? "1" : ""}" title="Ignore: leave it out of Grok-map" aria-label="Ignore">${ICON.eyeOff}</button>
+        </div>
+        ${stateBar(f, true)}
+      </div>`;
+    };
     const risky = d.risky.length
-      ? `<div class="card fade-in"><h3>Needs attention<span class="aside">${plural(d.risky.length + d.riskyMore, "file")}</span></h3><div class="files">${d.risky
-          .map(
-            (f) => `<div class="file has-actions" tabindex="0" data-act="openFile" data-path="${esc(f.path)}" title="${esc(f.path)}">
-              <div class="grow"><div class="name ellipsis">${esc(f.name)}</div><div class="dir ellipsis">${esc(f.dir || "/")}</div></div>
-              <div class="count"><b>${fmt(f.open)}</b> / ${fmt(f.ai)}</div>
-              <div class="actions"><button class="btn sm" data-act="quiz" data-path="${esc(f.path)}">${ICON.quiz} Quiz</button><button class="btn sm ghost" data-act="openFile" data-path="${esc(f.path)}" title="Open">${ICON.open}</button></div>
-              ${stateBar(f, true)}
-            </div>`,
-          )
-          .join("")}</div>${d.riskyMore ? `<div class="more">and ${plural(d.riskyMore, "more file")}</div>` : ""}</div>`
+      ? `<div class="card fade-in"><h3>Needs attention
+          <span class="tabs" role="tablist"><button role="tab" aria-selected="${view === "files"}" class="${view === "files" ? "on" : ""}" data-act="attn" data-view="files">Files</button><button role="tab" aria-selected="${view === "folders"}" class="${view === "folders" ? "on" : ""}" data-act="attn" data-view="folders">Folders</button></span></h3>
+        <div class="files">${rows.map(rowHtml).join("")}</div>
+        ${more ? `<div class="more">and ${plural(more, view === "folders" ? "more folder" : "more file")}</div>` : ""}
+        <div class="more">Hover a row: ${ICON.quiz} quiz · ${ICON.eye} reviewed · ${ICON.eyeOff} ignore</div></div>`
       : "";
     const people = `<div class="card fade-in"><h3>Who understands it</h3>${
       d.people.length
@@ -188,7 +206,7 @@
     const tools = d.tools.length
       ? `<div class="card fade-in"><h3>Written by</h3><div class="chips">${d.tools.map((t) => `<span class="chip">${esc(t.name)}<span class="n">${fmt(t.lines)}</span></span>`).join("")}</div></div>`
       : "";
-    return `${hero}<div class="grid"><div>${breakdown}${activeCard()}${trendCard()}</div><div>${risky}${people}${tools}</div></div>`;
+    return `${hero}${branchCard()}<div class="grid"><div>${breakdown}${activeCard()}${trendCard()}</div><div>${risky}${people}${tools}</div></div>`;
   }
 
   function trendCard() {
@@ -224,6 +242,18 @@
       <table class="sr-only"><caption>Lines added per ${unit}</caption><tr><th>${unit}</th><th>AI</th><th>People</th></tr>${t.periods
         .map((p) => `<tr><td>${esc(p.label)}</td><td>${p.ai}</td><td>${p.human}</td></tr>`)
         .join("")}</table>
+    </div>`;
+  }
+
+  function branchCard() {
+    const b = state.branch;
+    if (!b) return "";
+    const onDefault = b.base === `origin/${b.name}`;
+    return `<div class="card branch fade-in">
+      <h3>${ICON.branch} ${onDefault ? "Not pushed yet" : "This branch"}<span class="aside mono">${esc(b.name)} vs ${esc(b.base)}</span></h3>
+      <div class="headline-sm">${b.open ? `<b>${fmt(b.open)}</b> of ${plural(b.ai, "AI-written line")} you haven't checked` : `All ${plural(b.ai, "AI-written line")} checked`}</div>
+      <div class="more" style="margin-top:2px">${plural(b.commits, "commit")} · ${b.files.map((f) => esc(f.name)).slice(0, 3).join(", ")}${b.files.length > 3 ? "…" : ""}</div>
+      ${b.open ? `<button class="btn primary block" style="margin-top:11px" data-act="quiz" data-path="diff:${esc(b.base)}">${ICON.quiz} Quiz me before I push</button>` : ""}
     </div>`;
   }
 
@@ -490,9 +520,23 @@
         render();
         return;
       case "quiz":
-        local = { key: "", index: 0, drafts: [], depth: local.depth };
+        local = { key: "", index: 0, drafts: [], depth: local.depth, attn: local.attn };
         vscode.setState(local);
         send("quiz", { path: el ? el.dataset.path || "" : "" });
+        return;
+      case "attn":
+        local.attn = el.dataset.view;
+        vscode.setState(local);
+        render();
+        return;
+      case "codeOnly":
+        send("codeOnly", { on: !(state.dash && state.dash.codeOnly) });
+        return;
+      case "ignore":
+        send("ignore", { path: el.dataset.path, folder: !!el.dataset.folder });
+        return;
+      case "review":
+        send("review", { path: el.dataset.path });
         return;
       case "useRepo":
       case "openFile":

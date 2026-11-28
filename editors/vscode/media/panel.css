@@ -333,3 +333,30 @@ code {
 .tchart.few { justify-content: flex-start; gap: 6px; }
 .tchart.few .tcol { flex: 0 0 28px; }
 .taxis.few { justify-content: flex-start; gap: 24px; }
+
+/* ------------------------------------------------------------ code only switch, tabs, branch */
+.toggle {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer; border: 0; background: transparent;
+  color: var(--muted); font-size: 11.5px; font-weight: 500; text-transform: none; letter-spacing: 0; padding: 0;
+}
+.toggle .knob {
+  width: 24px; height: 14px; border-radius: 999px; background: var(--line); position: relative; transition: background .15s;
+}
+.toggle .knob::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--fg); opacity: .8; transition: transform .15s;
+}
+.toggle.on { color: var(--fg); }
+.toggle.on .knob { background: var(--mint); }
+.toggle.on .knob::after { transform: translateX(10px); background: var(--mint-ink); opacity: 1; }
+.tabs { display: inline-flex; gap: 2px; padding: 2px; border-radius: 8px; background: var(--card); text-transform: none; letter-spacing: 0; }
+.tabs button { border: 0; background: transparent; color: var(--muted); font-size: 11.5px; font-weight: 550; padding: 3px 9px; border-radius: 6px; cursor: pointer; }
+.tabs button.on { background: var(--card-hi); color: var(--fg); }
+.file .name svg { vertical-align: -2px; opacity: .7; }
+.more svg { vertical-align: -2px; }
+.branch { border-color: color-mix(in srgb, var(--mint) 35%, var(--line-soft)); }
+.branch h3 svg { vertical-align: -2px; margin-right: 2px; }
+.branch h3 { justify-content: flex-start; }
+.branch h3 .aside { margin-left: auto; max-width: 55%; overflow: hidden; text-overflow: ellipsis; }
+.headline-sm { font-size: 14px; font-weight: 600; }
+.headline-sm b { color: var(--mint); }

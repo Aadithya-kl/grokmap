@@ -5,6 +5,11 @@ import {
   QuizTarget,
   availableAssistants,
   averageScore,
+  branchView,
+  codeOnly,
+  fileKind,
+  folders,
+  pickBase,
   commitMessage,
   enforceBlanks,
   explainPrompt,
@@ -207,4 +212,88 @@ test("assistants: installed ones, plus Cursor's own chat in Cursor", () => {
   assert.deepEqual(ids(availableAssistants((id) => id === "anthropic.claude-code", "Visual Studio Code")), ["anthropic.claude-code"]);
   assert.deepEqual(ids(availableAssistants(() => false, "Cursor")), ["cursor"]);
   assert.match(handoffPrompt("# grokmap quiz brief\n..."), /record_understanding[\s\S]*# grokmap quiz brief/);
+});
+
+test("file kinds: tests, docs, data and generated files are not code", () => {
+  const kinds: Record<string, string> = {
+    "src/app/server.go": "code",
+    "backend/internal/container/service_test.go": "test",
+    "types/contract/testdata/agent-hub-v19.json": "test",
+    "web/src/Button.test.tsx": "test",
+    "tests/test_money.py": "test",
+    "docs/design/runtime-control.md": "docs",
+    "README.md": "docs",
+    "config/app.yaml": "data",
+    "package-lock.json": "generated",
+    "vendor/github.com/x/y.go": "generated",
+    "api/v1/service.pb.go": "generated",
+    "src/grokmap/report_template.html": "code",
+    "scripts/make_demo.py": "code",
+  };
+  for (const [p, k] of Object.entries(kinds)) assert.equal(fileKind(p), k, p);
+});
+
+test("code only: totals are recomputed from code files, and hidden ones counted", () => {
+  const c = codeOnly(status);
+  assert.deepEqual(Object.keys(c.status.files).sort(), ["c.py", "src/a.py", "src/d.py", "src/deep/b.py"]);
+  assert.equal(c.status.total.ai, 30 + 40 + 20 + 10);
+  assert.equal(c.hiddenFiles, 0); // README.md has no AI lines
+  const withTests = { ...status, files: { ...status.files, "src/a_test.py": stats(12, 12) } };
+  const c2 = codeOnly(withTests);
+  assert.equal(c2.hiddenFiles, 1);
+  assert.equal(c2.hiddenAi, 12);
+  assert.equal(c2.status.total.unread, 30 + 5 + 0 + 5);
+});
+
+test("folders: shallowest useful split, worst first", () => {
+  const st = {
+    repo: "r",
+    total: stats(0, 0),
+    files: {
+      "svc/a/x.go": stats(10, 10),
+      "svc/a/y.go": stats(5, 5),
+      "svc/b/z.go": stats(8, 2),
+      "web/c/q.ts": stats(4, 4),
+      "web/d/r.ts": stats(3, 3),
+      "lib/e.go": stats(2, 0),
+    },
+  };
+  const f = folders(st);
+  assert.equal(f.depth, 2); // depth 1 gives only svc and web
+  assert.deepEqual(
+    f.list.map((x) => [x.path, x.open, x.files]),
+    [
+      ["svc/a", 15, 2],
+      ["web/c", 4, 1],
+      ["web/d", 3, 1],
+      ["svc/b", 2, 1],
+    ],
+  );
+});
+
+test("branch: base choice and the summary", () => {
+  const refs = new Set(["origin/main", "main", "feat"]);
+  assert.equal(pickBase("feat", (r) => refs.has(r)), "origin/main");
+  assert.equal(pickBase("main", (r) => refs.has(r)), "origin/main");
+  assert.equal(pickBase("feat", (r) => r === "master"), "master");
+  assert.equal(pickBase("main", (r) => r === "main"), undefined);
+  const b = branchView("feat", {
+    base: "origin/main",
+    commits: 2,
+    ai: 30,
+    human: 1,
+    understood: 10,
+    unread: 20,
+    tools: { claude: 30 },
+    files: [
+      { path: "a/x.py", ai: 10, human: 0, understood: 10, unread: 0, partial: 0 },
+      { path: "a/y.py", ai: 20, human: 1, understood: 0, unread: 20, partial: 0 },
+    ],
+  })!;
+  assert.equal(b.open, 20);
+  assert.deepEqual(
+    b.files.map((f) => f.name),
+    ["y.py", "x.py"],
+  );
+  assert.equal(branchView("feat", { base: "main", commits: 1, ai: 0, human: 3, understood: 0, unread: 0, tools: {}, files: [] }), undefined);
 });

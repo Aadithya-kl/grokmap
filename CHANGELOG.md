@@ -15,8 +15,14 @@
   - **New code by week**: a small chart of lines added by AI and by people, from `grokmap trend`.
   - **Install for me**: no `grokmap` command yet? One click installs it with uv or pip and finds a command that runs it.
   - **A welcome guide** (VS Code's Get started page) walks new users through install, picking a repository, a first quiz and sharing the result.
+  - **This branch**: the AI-written lines your branch adds compared with `main` (or, on `main`, what you haven't pushed), how many you've checked, and **Quiz me before I push**.
+  - **Code only**, on by default: tests, test data, docs, config and generated files are left out of the numbers and the lists. One switch turns it off.
+  - **Files or Folders**: "Needs attention" groups by folder at a depth that splits the repository usefully, so a large codebase shows which areas nobody understands. Quiz a whole folder.
+  - **Mark as reviewed** (counts as skimmed, never as understood) and **Ignore** on every row, both with a confirmation first.
+  - **Switch or close the repository** from the repository chip (recent ones, another folder, or back to the start screen).
   - **No model? One-click hand-off** to Claude Code, Copilot Chat, Kilo Code, Cline, Roo Code or Cursor's chat: the quiz is copied (or filled in) and the assistant records your score through the MCP server.
   - Follows your light or dark theme, keyboard friendly, respects reduced motion.
+- **`grokmap ignore PATH…`**: leave files or folders out of Grok-map. Adds them to `exclude` in `.grokmap.toml` (creating it if needed) without touching the rest of the file; `--remove` undoes it. Refuses to rewrite settings kept in `pyproject.toml`.
 - "Quiz me" in hovers and menus now opens the panel quiz. The old copy-a-brief command is still there as **Grok-map: Copy a quiz brief for my AI assistant**.
 
 ## 0.6.2

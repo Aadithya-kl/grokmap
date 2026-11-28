@@ -6,6 +6,7 @@
 - **Quizzes in the panel**, written and graded by the AI model you already have in VS Code (such as GitHub Copilot). Results are saved to the ledger and the gutter updates.
 - **Start screen** with the exact files and lines, **Quick** or **Thorough**, and **Pick another file**. **Finish now**, **Retake**, and **Explain it instead**.
 - **Commit to git** on the result commits only the ledger, never pushes.
+- **This branch** card with **Quiz me before I push**; **Code only** switch (on by default); **Files / Folders** views; **Mark as reviewed** and **Ignore** on every row; switch or close the repository from the chip.
 - **New code by week** chart, **Install for me** for the command-line tool, and a **Get started** guide.
 - **No model?** One click hands the quiz to Claude Code, Copilot Chat, Kilo Code, Cline, Roo Code or Cursor's chat.
 

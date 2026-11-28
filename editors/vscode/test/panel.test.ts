@@ -21,6 +21,8 @@ function setup(models: unknown[]) {
   const posted: Msg[] = [];
   const clipboard: string[] = [];
   const prompts: string[] = [];
+  const confirm: string[] = [];
+  const errors: string[] = [];
   let receive: (m: unknown) => void = () => {};
   const global = new Map<string, unknown>();
   class CancellationTokenSource {
@@ -40,9 +42,15 @@ function setup(models: unknown[]) {
     CancellationError: class extends Error {},
     LanguageModelError: class extends Error {},
     LanguageModelChatMessage: { User: (content: string) => ({ content }) },
+    QuickPickItemKind: { Separator: -1 },
     window: {
       activeTextEditor: undefined,
-      showInformationMessage: async () => undefined,
+      // modal confirmations: answer with the button the test queued, else dismiss
+      showInformationMessage: async (_m: string, ...rest: unknown[]) => {
+        const buttons = rest.filter((x) => typeof x === "string") as string[];
+        return confirm.length ? (buttons.includes(confirm[0]) ? confirm.shift() : undefined) : undefined;
+      },
+      showErrorMessage: async (m: string) => void errors.push(m),
       setStatusBarMessage: () => ({ dispose() {} }),
     },
     workspace: {
@@ -82,7 +90,7 @@ function setup(models: unknown[]) {
     }
     throw new Error(`timed out waiting for ${what}; last state: ${JSON.stringify(last()).slice(0, 600)}`);
   };
-  return { repo, view, context, clipboard, prompts, send: (m: unknown) => receive(m), until, restore: () => (M._load = realLoad) };
+  return { repo, view, context, clipboard, prompts, confirm, errors, send: (m: unknown) => receive(m), until, restore: () => (M._load = realLoad) };
 }
 
 function fakeModel(prompts: string[]) {
@@ -179,6 +187,53 @@ test("panel: explain it instead, graded and recorded as an explanation", { skip:
     assert.match(prompts[0], /Their explanation:/);
     const ledger = fs.readFileSync(path.join(t.repo, ".grokmap", "ledger.jsonl"), "utf8");
     assert.match(ledger, /"method": ?"explain"/);
+  } finally {
+    t.restore();
+  }
+});
+
+test("panel: this branch, quiz before push, mark as reviewed, ignore", { skip: !source || !file }, async () => {
+  const prompts: string[] = [];
+  const t = setup([fakeModel(prompts)]);
+  const g = (...args: string[]) => execFileSync("git", args, { cwd: t.repo, encoding: "utf8" });
+  try {
+    // a feature branch with one AI-written commit
+    g("switch", "-q", "-c", "feat/limits");
+    fs.appendFileSync(path.join(t.repo, file!), "\n\ndef limit(n):\n    if n < 0:\n        raise ValueError(n)\n    return min(n, 5)\n");
+    g("commit", "-qam", "limit retries\n\nCo-Authored-By: Claude <noreply@anthropic.com>");
+
+    const { GrokmapPanel } = await import("../src/panel");
+    const panel = new GrokmapPanel(t.context as never, async () => undefined);
+    panel.resolveWebviewView(t.view as never);
+    const ready = await t.until((s) => s.phase === "ready" && !!s.branch, "the branch card");
+    assert.equal(ready.branch.name, "feat/limits");
+    assert.equal(ready.branch.base, "main");
+    assert.ok(ready.branch.open >= 4);
+    assert.equal(ready.codeOnly, true);
+
+    t.send({ type: "quiz", path: `diff:${ready.branch.base}` });
+    const start = await t.until((s) => s.quiz?.phase === "start", "the branch quiz start screen");
+    assert.equal(start.quiz.title, "This branch");
+    assert.deepEqual(
+      start.quiz.files.map((f: { path: string }) => f.path),
+      [file],
+    );
+    t.send({ type: "closeQuiz" });
+
+    // mark as reviewed: asks first, then records a review (skimmed)
+    t.confirm.push("I reviewed it");
+    const unreadBefore = ready.dash.unread;
+    t.send({ type: "review", path: file });
+    await t.until((s) => s.dash && s.dash.skimmed > 0 && s.dash.unread < unreadBefore, "the review to count as skimmed");
+    assert.match(fs.readFileSync(path.join(t.repo, ".grokmap", "ledger.jsonl"), "utf8"), /"method": ?"review"/);
+
+    // ignore: asks first, writes .grokmap.toml, and the file drops out
+    const dir = file!.split("/").slice(0, -1).join("/");
+    t.confirm.push("Ignore");
+    t.send({ type: "ignore", path: dir, folder: true });
+    await t.until((s) => s.dash && !s.dash.risky.some((f: { path: string }) => f.path.startsWith(dir + "/")), "the folder to drop out");
+    assert.match(fs.readFileSync(path.join(t.repo, ".grokmap.toml"), "utf8"), new RegExp(`exclude = \\["${dir.replace(/[/.]/g, "\\$&")}/\\*\\*"\\]`));
+    assert.deepEqual(t.errors, []);
   } finally {
     t.restore();
   }

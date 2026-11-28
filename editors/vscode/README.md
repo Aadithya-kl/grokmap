@@ -12,6 +12,8 @@ Click the **Grok-map** icon in the activity bar. Or open it as an editor tab wit
 
 - **Pick any repository.** No need to open it as a folder first. Recent ones are one click away.
 - **Install in one click.** No `grokmap` command yet? **Install for me** sets it up with uv or pip. New here? **Grok-map: Get started** walks you through it.
+- **Check your branch before you push.** The panel shows the AI-written lines your branch adds that you haven't checked. **Quiz me before I push** covers exactly those lines.
+- **Focus on real code.** **Code only** (on by default) leaves out tests, docs, data and generated files. Switch **Needs attention** between **Files** and **Folders** to see which areas of a big codebase nobody understands. Hover a row to quiz, **mark as reviewed** (counts as half understood), or **ignore** it for the whole team.
 - **See where you stand.** Shows how much of the AI-written code anyone understands and which files need attention. Click a file to open it, or quiz yourself on it. It also shows who understands what, which agents wrote the code, and how much of each week's new code came from AI.
 - **Get quizzed right there.** You see exactly which lines a quiz covers before it starts. Choose **Quick** (3 questions) or **Thorough** (4 to 6), or **Explain it instead** in a paragraph.
   - One question at a time, with **Finish now** if you've had enough.
