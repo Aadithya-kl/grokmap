@@ -1,6 +1,6 @@
 {
   "name": "grokmap",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Measure comprehension debt: quiz yourself on AI-written code and map what your team actually understands.",
   "author": { "name": "K. L. Aadithya", "url": "https://github.com/Aadithya-kl" },
   "homepage": "https://github.com/Aadithya-kl/grokmap",

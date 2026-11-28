@@ -17,6 +17,8 @@ grokmap --version || pipx install grokmap || pip install --user grokmap
 
 If none of those work, `uvx grokmap <command>` runs it without installing. In a repo that has never used grokmap, run `grokmap init` (it adds `.grokmap.toml`, the ledger and a merge rule) and tell the user what it created.
 
+If the grokmap MCP tools are connected (`comprehension_risk`, `quiz_brief`, `record_understanding`…), use them instead of the CLI: they return the same data as structured results. Before you change a file, `comprehension_risk` tells you how carefully to tread: at *high* or *very high*, keep the diff small, explain what you changed and why, and offer a quiz afterwards.
+
 ## When to use it
 
 | The user… | Do this |

@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling>=1.21"]
+build-backend = "hatchling.build"
+
+[project]
+name = "grokmap-mcp"
+version = "0.3.0"
+description = "MCP server for grokmap: lets coding agents see which AI-written code nobody on the team understands, and quiz you on it."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [{ name = "K. L. Aadithya" }]
+keywords = ["mcp", "mcp-server", "claude-code", "comprehension-debt", "code-review", "ai-coding"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = ["grokmap[mcp]==0.3.0"]
+
+[project.urls]
+Homepage = "https://aadithya-kl.github.io/grokmap/"
+Source = "https://github.com/Aadithya-kl/grokmap"
+
+[project.scripts]
+grokmap-mcp = "grokmap.mcp_server:main"
+
+[tool.hatch.build.targets.wheel]
+bypass-selection = true

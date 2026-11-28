@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.3.0
+
+- **MCP server.** `uvx grokmap-mcp` (or `grokmap mcp` with `pip install "grokmap[mcp]"`) gives coding agents seven tools: `comprehension_risk`, `repo_status`, `who_understands`, `quiz_brief`, `record_understanding`, `pr_comprehension` and `ai_trend`, plus a `quiz_me` prompt. Agents can check how well a file is understood before they change it.
+- Published to the official MCP Registry as `io.github.Aadithya-kl/grokmap`; the Claude Code plugin now wires up the server too.
+- The core package still has zero dependencies; the MCP SDK is only pulled in by the `mcp` extra.
+
 ## 0.2.1
 
 - Detect Charm Crush commits, `Assisted-by: Claude` / Copilot / Codex trailers, Copilot Autofix and "(Written by Copilot)".

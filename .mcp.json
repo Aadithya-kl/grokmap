@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "grokmap": {
+      "command": "uvx",
+      "args": ["grokmap-mcp"]
+    }
+  }
+}

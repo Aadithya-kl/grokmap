@@ -28,7 +28,7 @@
   "name": "grokmap",
   "applicationCategory": "DeveloperApplication",
   "operatingSystem": "Windows, macOS, Linux",
-  "description": "Measures comprehension debt: AI-written code in a git repository that no person has shown they understand. Detects commits from Claude Code, GitHub Copilot, Cursor, Codex and other coding agents, and quizzes developers through an agent skill.",
+  "description": "Measures comprehension debt: AI-written code in a git repository that no person has shown they understand. Detects commits from Claude Code, GitHub Copilot, Cursor, Codex and other coding agents, and quizzes developers through an agent skill and an MCP server.",
   "url": "https://aadithya-kl.github.io/grokmap/",
   "downloadUrl": "https://github.com/Aadithya-kl/grokmap",
   "softwareVersion": "0.2.0",
@@ -48,6 +48,8 @@
       "acceptedAnswer": { "@type": "Answer", "text": "Run grokmap status in your repository. It traces every line with git blame and counts lines from commits that carry an AI agent's marker, such as a Co-Authored-By: Claude trailer or a Copilot or Cursor bot author. grokmap trend shows how that share changed over time." } },
     { "@type": "Question", "name": "Does grokmap send my code anywhere?",
       "acceptedAnswer": { "@type": "Answer", "text": "No. grokmap is a local command-line tool with no dependencies beyond Python and git, and it makes no network calls." } },
+    { "@type": "Question", "name": "Is there a grokmap MCP server?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Run it with uvx grokmap-mcp. It is listed in the official MCP Registry as io.github.Aadithya-kl/grokmap and gives coding agents tools to check how well the team understands a file before changing it, and to quiz developers and record the results." } },
     { "@type": "Question", "name": "Which coding agents does grokmap detect?",
       "acceptedAnswer": { "@type": "Answer", "text": "Claude Code, GitHub Copilot, Cursor, OpenAI Codex, Aider, Devin, Gemini and Jules, Amazon Q, Windsurf and Charm Crush, plus any custom pattern you configure." } }
   ]
@@ -103,7 +105,7 @@ grokmap status</code></pre></div>
 <section><div class="wrap">
   <h2>Works where you already work</h2>
   <div class="grid3">
-    <div class="card"><h3>In your coding agent</h3><p>Claude Code: <code>/plugin install grokmap --marketplace Aadithya-kl/grokmap</code>. Codex, Cursor, Gemini CLI and others: <code>npx skills add Aadithya-kl/grokmap</code>. Then say "quiz me on the payments module".</p></div>
+    <div class="card"><h3>In your coding agent</h3><p>Claude Code: <code>/plugin install grokmap --marketplace Aadithya-kl/grokmap</code>. Codex, Cursor, Gemini CLI and others: <code>npx skills add Aadithya-kl/grokmap</code>. Then say "quiz me on the payments module". Or add the MCP server, <code>uvx grokmap-mcp</code>, so the agent checks who understands a file before it edits it.</p></div>
     <div class="card"><h3>On every pull request</h3><p>The GitHub Action posts one comment per PR: how many AI-written lines it adds and how many someone understands. Optional limits can block merges.</p></div>
     <div class="card"><h3>In your terminal</h3><p><code>status</code>, <code>report</code>, <code>diff</code>, <code>trend</code>, <code>quiz</code>, <code>mark</code>, <code>check</code>, <code>badge</code>. Python 3.11+ and git, nothing else. Nothing leaves your machine.</p></div>
   </div>
@@ -112,6 +114,7 @@ grokmap status</code></pre></div>
 <section class="faq"><div class="wrap">
   <h2>Questions</h2>
   <details><summary>What is comprehension debt?</summary><p>The gap between how much code exists in a system and how much of it any person actually understands. <a href="comprehension-debt/">A longer explanation, with how to measure it.</a></p></details>
+  <details><summary>Is there an MCP server?</summary><p>Yes: <code>uvx grokmap-mcp</code>, listed in the official MCP Registry as <code>io.github.Aadithya-kl/grokmap</code>. It gives Claude Code, Cursor, Codex, VS Code and other clients tools such as <code>comprehension_risk</code>, which says how well the team understands a file before the agent changes it, and <code>quiz_brief</code> and <code>record_understanding</code> for quizzes. It runs locally with no API keys.</p></details>
   <details><summary>How do I find out how much of my code was written by AI?</summary><p>Run <code>grokmap status</code>. It counts lines from commits that carry an AI agent's marker. <code>grokmap trend</code> shows how that changed month by month.</p></details>
   <details><summary>Is this surveillance?</summary><p>No. It measures code, not people. Nobody is quizzed unless they ask, and the ledger only holds what people choose to record.</p></details>
   <details><summary>What if AI code was pasted from a chat window?</summary><p>grokmap can't see it and counts it as human-written. Detection is deliberately conservative: it only uses evidence in commit metadata.</p></details>

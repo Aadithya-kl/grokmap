@@ -6,11 +6,12 @@
 
 [![ci](https://github.com/Aadithya-kl/grokmap/actions/workflows/ci.yml/badge.svg)](https://github.com/Aadithya-kl/grokmap/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/grokmap)](https://pypi.org/project/grokmap/)
+[![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.Aadithya--kl%2Fgrokmap-6e56cf)](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.Aadithya-kl/grokmap)
 ![python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 ![license](https://img.shields.io/badge/license-MIT-lightgrey)
 
-**[▶ Live demo](https://aadithya-kl.github.io/grokmap/demo/)** · [Website](https://aadithya-kl.github.io/grokmap/) · [Study: how much of open source is AI-written?](https://aadithya-kl.github.io/grokmap/study/) · [Install](#install) · [Agent skill](#add-the-skill-to-your-coding-agent) · [CI and PR comments](#in-ci)
+**[▶ Live demo](https://aadithya-kl.github.io/grokmap/demo/)** · [Website](https://aadithya-kl.github.io/grokmap/) · [Study: how much of open source is AI-written?](https://aadithya-kl.github.io/grokmap/study/) · [Install](#install) · [Agent skill](#add-the-skill-to-your-coding-agent) · [MCP server](#mcp-server) · [CI and PR comments](#in-ci)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/report-dark.png">
@@ -107,6 +108,41 @@ or copy [`skills/grokmap/`](skills/grokmap/SKILL.md) into your agent's skills fo
 
 Then just say **"quiz me on the payments module"**, or let the agent offer after it finishes a change.
 
+<a id="mcp-server"></a>
+### MCP server: let your agent check before it edits
+
+The skill teaches the agent to quiz you. The MCP server goes further: before the agent changes code, it can ask **"does anyone on this team actually understand this?"** and be more careful when the answer is no.
+
+```json
+{
+  "mcpServers": {
+    "grokmap": { "command": "uvx", "args": ["grokmap-mcp"] }
+  }
+}
+```
+
+That block works in Claude Desktop, Cursor (`.cursor/mcp.json`), Windsurf and most other clients. Elsewhere:
+
+```bash
+claude mcp add grokmap -- uvx grokmap-mcp                  # Claude Code (the plugin above already includes it)
+codex mcp add grokmap -- uvx grokmap-mcp                   # Codex CLI
+code --add-mcp '{"name":"grokmap","command":"uvx","args":["grokmap-mcp"]}'   # VS Code
+```
+
+Already installed grokmap? `pip install "grokmap[mcp]"` and use `grokmap mcp` as the command instead.
+
+| Tool | What the agent gets |
+|---|---|
+| `comprehension_risk` | For the files it's about to change: a risk level from *none* to *very high*, who understands them, and how to act (explain the change, keep the diff small, offer a quiz). |
+| `repo_status` | Debt, AI share and the riskiest files. |
+| `who_understands` | Who has shown they understand a file or folder, so it knows whom to ask. |
+| `quiz_brief` | The exact lines you haven't shown you understand, plus grading rules. |
+| `record_understanding` | Records a quiz, explanation, review or pairing result in the shared ledger. The only tool that writes. |
+| `pr_comprehension` | The AI-written lines a branch adds and how many are understood. |
+| `ai_trend` | How much of the code added each week or month each agent wrote. |
+
+Plus a `quiz_me` prompt. Everything runs locally on your git history: no network calls, no API keys. It's listed in the [official MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.Aadithya-kl/grokmap) as `io.github.Aadithya-kl/grokmap`.
+
 ## Quick start
 
 ```bash
@@ -132,6 +168,7 @@ Commit `.grokmap/ledger.jsonl` so your whole team shares one map. It's one JSON 
 | `grokmap check [--max-debt 40] [--critical]` | Exits 1 above the limit. For CI. |
 | `grokmap badge` | An SVG badge for your README: ![comprehension debt badge](docs/badge-example.svg) |
 | `grokmap init` | Adds config, ledger and `.gitattributes`. |
+| `grokmap mcp` | Runs the MCP server over stdio (needs `grokmap[mcp]`). |
 
 ## In CI
 

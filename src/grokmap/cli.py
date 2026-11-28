@@ -296,6 +296,20 @@ def cmd_init(args) -> int:
     return 0
 
 
+def cmd_mcp(args) -> int:
+    try:
+        from grokmap.mcp_server import main as serve
+    except ImportError as exc:
+        print(f"grokmap mcp: {exc}", file=sys.stderr)
+        return 2
+    import os
+
+    if args.repo and args.repo != ".":
+        os.chdir(args.repo)
+    serve()
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="grokmap",
@@ -369,6 +383,9 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("who", help="who understands the AI-written code in a file or folder")
     s.add_argument("path")
     s.set_defaults(func=cmd_who)
+
+    s = sub.add_parser("mcp", help='run the MCP server over stdio for coding agents (needs: pip install "grokmap[mcp]")')
+    s.set_defaults(func=cmd_mcp)
 
     s = sub.add_parser("init", help="add config, ledger and .gitattributes to this repo")
     s.set_defaults(func=cmd_init)

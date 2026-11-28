@@ -4,14 +4,14 @@ build-backend = "hatchling.build"
 
 [project]
 name = "grokmap"
-version = "0.2.1"
+version = "0.3.0"
 description = "Measure comprehension debt: the AI-written code in your repo that nobody understands."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.11"
 authors = [{ name = "K. L. Aadithya" }]
-keywords = ["ai", "claude-code", "codex", "copilot", "code-review", "comprehension-debt", "git", "agent-skills"]
+keywords = ["mcp", "mcp-server", "ai", "claude-code", "codex", "copilot", "code-review", "comprehension-debt", "git", "agent-skills"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Environment :: Console",
@@ -29,9 +29,11 @@ Issues = "https://github.com/Aadithya-kl/grokmap/issues"
 
 [project.scripts]
 grokmap = "grokmap.cli:main"
+grokmap-mcp = "grokmap.mcp_server:main"
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "ruff>=0.6"]
+mcp = ["mcp>=2.3,<3"]
+dev = ["pytest>=8", "ruff>=0.6", "mcp>=2.3,<3"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/grokmap"]
