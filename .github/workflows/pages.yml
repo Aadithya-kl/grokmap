@@ -40,7 +40,7 @@ jobs:
           grokmap -C "$RUNNER_TEMP/demo" report -o _site/demo/index.html --name shopcart \
             --note "Live demo of grokmap on a small fake shop written mostly by AI agents. Hover anything; click folders to zoom. github.com/Aadithya-kl/grokmap"
           grokmap -C "$RUNNER_TEMP/demo" badge -o _site/demo/badge.svg
-      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: _site
 
