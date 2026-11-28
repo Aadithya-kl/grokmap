@@ -5,12 +5,12 @@
   "description": "Shows coding agents which AI-written code nobody on the team understands, and quizzes you on it.",
   "websiteUrl": "https://aadithya-kl.github.io/grokmap/",
   "repository": { "url": "https://github.com/Aadithya-kl/grokmap", "source": "github" },
-  "version": "0.4.0",
+  "version": "0.5.0",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "grokmap-mcp",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "runtimeHint": "uvx",
       "transport": { "type": "stdio" }
     }

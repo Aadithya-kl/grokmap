@@ -6,3 +6,4 @@ site
 docs
 tests
 **/__pycache__
+editors

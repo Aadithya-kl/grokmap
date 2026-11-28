@@ -115,6 +115,7 @@ def test_all_version_numbers_agree():
         server["version"],
         server["packages"][0]["version"],
         json.loads((root / ".claude-plugin/plugin.json").read_text())["version"],
+        json.loads((root / "editors/vscode/package.json").read_text())["version"],
         grokmap.__version__,
     }
     assert len(versions) == 1, versions

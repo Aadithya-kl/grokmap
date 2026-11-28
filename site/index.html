@@ -31,7 +31,7 @@
   "description": "Measures comprehension debt: AI-written code in a git repository that no person has shown they understand. Detects commits from Claude Code, GitHub Copilot, Cursor, Codex and other coding agents, and quizzes developers through an agent skill and an MCP server.",
   "url": "https://aadithya-kl.github.io/grokmap/",
   "downloadUrl": "https://github.com/Aadithya-kl/grokmap",
-  "softwareVersion": "0.4.0",
+  "softwareVersion": "0.5.0",
   "license": "https://opensource.org/licenses/MIT",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
   "author": { "@type": "Person", "name": "K. L. Aadithya", "url": "https://github.com/Aadithya-kl" }
@@ -75,6 +75,7 @@
     </div>
     <div class="install"><pre><code>pipx install grokmap        # or: uvx grokmap status
 grokmap status</code></pre></div>
+    <div class="shot"><img src="demo.gif" alt="A coding agent calls grokmap before editing a payments module, sees that 35 AI-written lines were never checked, keeps the change small, quizzes the developer and records the result while the editor gutter turns from red to green" width="1200" height="675"></div>
     <div class="shot"><picture>
       <source media="(prefers-color-scheme: dark)" srcset="report-dark.png">
       <img src="report-light.png" alt="grokmap report showing 35% comprehension debt, who understands each line, a weekly chart of AI-written code by agent, and a treemap of files colored by debt" width="1200" height="1528" loading="lazy">

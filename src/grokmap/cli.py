@@ -272,6 +272,35 @@ def cmd_who(args) -> int:
     return 0
 
 
+def cmd_lines(args) -> int:
+    from grokmap.lines import file_lines
+    from grokmap.score import ranges
+
+    root, cfg = _context(args)
+    contents = sys.stdin.read() if args.stdin else None
+    try:
+        data = file_lines(root, cfg, args.path, contents)
+    except ValueError as exc:
+        print(f"grokmap lines: {exc}", file=sys.stderr)
+        return 2
+    if args.json:
+        print(json.dumps(data))
+        return 0
+    if not data["tracked"]:
+        print(f"{data['path']}: {data['note']}")
+        return 0
+    s = data["summary"]
+    print(f"{data['path']}: {s['lines']} lines, {s['ai']} written by AI, debt {s['debt_pct']}%")
+    by_state: dict[str, list[int]] = {}
+    for ln in data["lines"]:
+        by_state.setdefault(ln["state"], []).append(ln["line"])
+    for state in ("unread", "skimmed", "fading", "understood", "uncommitted"):
+        if state in by_state:
+            spans = ", ".join(f"{a}" if a == b else f"{a}-{b}" for a, b in ranges(by_state[state]))
+            print(f"  {state:<11} {spans}")
+    return 0
+
+
 def cmd_init(args) -> int:
     root = gitutil.repo_root(Path(args.repo).resolve())
     cfg_path = root / ".grokmap.toml"
@@ -383,6 +412,12 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("who", help="who understands the AI-written code in a file or folder")
     s.add_argument("path")
     s.set_defaults(func=cmd_who)
+
+    s = sub.add_parser("lines", help="per-line states for one file, as an editor sees it (used by the VS Code extension)")
+    s.add_argument("path")
+    s.add_argument("--json", action="store_true", help="machine-readable output")
+    s.add_argument("--stdin", action="store_true", help="read the file's current text from stdin (an unsaved editor buffer)")
+    s.set_defaults(func=cmd_lines)
 
     s = sub.add_parser("mcp", help='run the MCP server over stdio for coding agents (needs: pip install "grokmap[mcp]")')
     s.set_defaults(func=cmd_mcp)

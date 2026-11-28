@@ -13,12 +13,9 @@
 ![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 ![license](https://img.shields.io/badge/license-MIT-lightgrey)
 
-**[▶ Live demo](https://aadithya-kl.github.io/grokmap/demo/)** · [Website](https://aadithya-kl.github.io/grokmap/) · [Study: how much of open source is AI-written?](https://aadithya-kl.github.io/grokmap/study/) · [Install](#install) · [Agent skill](#add-the-skill-to-your-coding-agent) · [MCP server](#mcp-server) · [CI and PR comments](#in-ci)
+**[▶ Live demo](https://aadithya-kl.github.io/grokmap/demo/)** · [Website](https://aadithya-kl.github.io/grokmap/) · [Study: how much of open source is AI-written?](https://aadithya-kl.github.io/grokmap/study/) · [Install](#install) · [Agent skill](#add-the-skill-to-your-coding-agent) · [MCP server](#mcp-server) · [VS Code](#vs-code-extension) · [CI and PR comments](#in-ci)
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/report-dark.png">
-  <img src="docs/report-light.png" alt="grokmap report: 35% comprehension debt, a bar of every line by who understands it, a weekly chart of who wrote the code, and a treemap of files colored by debt" width="900">
-</picture>
+<img src="docs/demo.gif" alt="A coding agent calls grokmap before editing a payments module, sees risk: very high because 35 AI-written lines were never checked, keeps the change small, quizzes the developer and records the result; in the editor the gutter turns from red to green" width="900">
 
 </div>
 
@@ -29,6 +26,13 @@ Coding agents now write a large share of the code we ship. The tests pass, the d
 That gap has a name: **comprehension debt**, the difference between how much code is in your system and how much of it any person actually understands. It doesn't show up in linters, coverage or code review dashboards.
 
 **grokmap measures it.** It traces every line in your repo to the commit that wrote it, recognises commits made by AI agents (Claude Code, Copilot, Cursor, Codex, Aider, Devin, Gemini…), and checks them against a shared ledger of who has *shown* they understand that code. Then it draws you a map.
+
+<p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/report-dark.png">
+  <img src="docs/report-light.png" alt="grokmap report: 35% comprehension debt, a bar of every line by who understands it, a weekly chart of who wrote the code, and a treemap of files colored by debt" width="820">
+</picture>
+</p>
 
 ```
 $ grokmap status
@@ -152,6 +156,13 @@ Prefer Docker? `docker build -t grokmap-mcp .` in this repo, then use `docker ru
 
 Plus a `quiz_me` prompt. Every tool returns structured results with a published output schema, so agents read fields instead of parsing text. Everything runs locally on your git history: no network calls, no API keys. Find it in the [official MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.Aadithya-kl/grokmap) (`io.github.Aadithya-kl/grokmap`), on [Glama](https://glama.ai/mcp/servers/Aadithya-kl/grokmap) and on [cursor.directory](https://cursor.directory/plugins/grokmap).
 
+<a id="vs-code-extension"></a>
+### VS Code extension: see it in the gutter
+
+The [grokmap extension](editors/vscode) colours every AI-written line in the editor margin: **red** where nobody has checked it, **orange** where it was only skimmed, **yellow** where understanding is fading, **green** where someone has shown they understand it. Hover a block to see which agent wrote it, in which commit, and who understands it. The status bar shows the file's debt, and **grokmap: Quiz me on this file** hands your agent a quiz brief. It follows your edits as you type, and works in VS Code, Cursor, Windsurf and VSCodium.
+
+Install the `.vsix` from the [latest release](https://github.com/Aadithya-kl/grokmap/releases/latest) (Extensions → ⋯ → Install from VSIX), with the CLI on your PATH (`pip install grokmap`) or `grokmap.command` set to `uvx grokmap`.
+
 ## Quick start
 
 ```bash
@@ -177,6 +188,7 @@ Commit `.grokmap/ledger.jsonl` so your whole team shares one map. It's one JSON 
 | `grokmap check [--max-debt 40] [--critical]` | Exits 1 above the limit. For CI. |
 | `grokmap badge` | An SVG badge for your README: ![comprehension debt badge](docs/badge-example.svg) |
 | `grokmap init` | Adds config, ledger and `.gitattributes`. |
+| `grokmap lines FILE` | Per-line states for one file, as an editor sees it (`--json`, `--stdin` for unsaved text). Used by the VS Code extension. |
 | `grokmap mcp` | Runs the MCP server over stdio (needs `grokmap[mcp]`). |
 
 ## In CI

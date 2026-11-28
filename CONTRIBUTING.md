@@ -32,7 +32,22 @@ grokmap -C /tmp/grokmap-demo report --open
 | `src/grokmap/prdiff.py`, `trend.py` | PR summaries and history over time |
 | `src/grokmap/report_template.html` | the whole HTML report (plain JS, no build step) |
 | `skills/grokmap/SKILL.md` | instructions coding agents follow to run quizzes |
+| `src/grokmap/lines.py` | per-line states for one file, for editors (`grokmap lines`) |
+| `src/grokmap/agent_tools.py`, `mcp_server.py`, `mcp_models.py` | the MCP server: plain functions, the tool wrappers, typed results |
+| `editors/vscode/` | the VS Code extension (TypeScript; `npm test` there) |
 | `action.yml` | the GitHub Action |
+
+## Good first issues: where to start
+
+Each of these is a few hours of work, has a clear "done", and touches one or two files. Comment on the issue to claim it, and ask anything there: you'll get an answer within a day.
+
+| Issue | Start here | Done when |
+|---|---|---|
+| [#1 Detect Cline, Roo Code and Zed's agent](https://github.com/Aadithya-kl/grokmap/issues/1) | `BUILTIN_SIGNATURES` in `src/grokmap/detect.py`; follow "Adding detection" below | a test in `tests/test_detect_config.py` per agent, with a link to a real commit in the PR |
+| [#2 Detect Amp and OpenHands](https://github.com/Aadithya-kl/grokmap/issues/2) | same as #1 | same as #1 |
+| [#6 Skip comment-only and import lines](https://github.com/Aadithya-kl/grokmap/issues/6) | `is_meaningful()` in `src/grokmap/scan.py`, plus a `skip_comments` option in `src/grokmap/config.py` | off by default; a test in `tests/test_scan_score.py` shows the counts change only when it's on |
+| [#9 Keyboard and screen-reader support for the treemap](https://github.com/Aadithya-kl/grokmap/issues/9) | the `#treemap` code in `src/grokmap/report_template.html` (plain JS, no build) | Tab moves between files, Enter opens one, each tile has an `aria-label`; attach light and dark screenshots |
+| [#10 Example quiz sessions with Codex, Cursor and Gemini CLI](https://github.com/Aadithya-kl/grokmap/issues/10) | run a quiz on the demo repo (see "Set up") with your agent | a short transcript per agent in `docs/`, linked from the README |
 
 ## Adding detection for another coding agent
 

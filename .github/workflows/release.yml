@@ -4,7 +4,9 @@ name: release
 #   1. build grokmap and grokmap-mcp
 #   2. publish both to PyPI (trusted publishing, no token)
 #   3. publish server.json to the official MCP Registry (GitHub OIDC, no token)
-#   4. move the floating major tag (v0) used by `uses: Aadithya-kl/grokmap@v0`
+#   4. build the VS Code extension, attach it to the GitHub release, and publish it to the
+#      VS Code Marketplace / Open VSX when the VSCE_PAT / OVSX_PAT secrets are set
+#   5. move the floating major tag (v0) used by `uses: Aadithya-kl/grokmap@v0`
 on:
   push:
     tags: ["v*"]
@@ -31,6 +33,7 @@ jobs:
               "packages/grokmap-mcp/pyproject.toml": tomllib.load(open("packages/grokmap-mcp/pyproject.toml", "rb"))["project"]["version"],
               "server.json": json.load(open("server.json"))["version"],
               "server.json packages[0]": json.load(open("server.json"))["packages"][0]["version"],
+              "editors/vscode/package.json": json.load(open("editors/vscode/package.json"))["version"],
               "src/grokmap/__init__.py": re.search(r'__version__ = "([^"]+)"', open("src/grokmap/__init__.py").read()).group(1),
           }
           bad = {k: v for k, v in found.items() if v != tag}
@@ -111,3 +114,37 @@ jobs:
         run: |
           major="${GITHUB_REF_NAME%%.*}"
           git tag -f "$major" && git push -f origin "$major"
+
+  vscode:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: editors/vscode
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - run: npm ci
+      - run: npm run compile && npx vsce package --no-dependencies -o "grokmap-${GITHUB_REF_NAME#v}.vsix"
+      - name: Attach the extension to the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --verify-tag --title "$GITHUB_REF_NAME" --notes ""
+          gh release upload "$GITHUB_REF_NAME" grokmap-*.vsix --clobber
+      - name: Publish to the VS Code Marketplace (if VSCE_PAT is set)
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -z "$VSCE_PAT" ]; then echo "VSCE_PAT not set: skipping the Marketplace"; exit 0; fi
+          npx vsce publish --packagePath grokmap-*.vsix
+      - name: Publish to Open VSX, used by Cursor and VSCodium (if OVSX_PAT is set)
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          if [ -z "$OVSX_PAT" ]; then echo "OVSX_PAT not set: skipping Open VSX"; exit 0; fi
+          npx --yes ovsx@0.10.9 publish grokmap-*.vsix -p "$OVSX_PAT"

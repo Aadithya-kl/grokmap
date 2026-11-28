@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>
+  * { box-sizing: border-box; margin: 0; }
+  body { width: 1600px; height: 900px; background: #0d1117; color: #e6edf3; font-family: Inter, "Segoe UI", system-ui, sans-serif; padding: 40px 48px; overflow: hidden; }
+  .top { display: flex; align-items: baseline; gap: 16px; margin-bottom: 24px; }
+  .brand { font-size: 38px; font-weight: 800; letter-spacing: -1px; }
+  .tag { font-size: 23px; color: #8b949e; }
+  .grid { display: grid; grid-template-columns: 820px 1fr; gap: 24px; height: 690px; }
+  .pane { background: #161b22; border: 1px solid #30363d; border-radius: 14px; overflow: hidden; position: relative; }
+  .bar { height: 40px; background: #1f2630; display: flex; align-items: center; gap: 9px; padding: 0 16px; border-bottom: 1px solid #30363d; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .bar span { margin-left: 10px; color: #8b949e; font: 16px "JetBrains Mono", "DejaVu Sans Mono", monospace; }
+  .term { padding: 22px 26px; font: 19px/1.6 "JetBrains Mono", "DejaVu Sans Mono", monospace; }
+  .row { min-height: 30px; }
+  .you b { color: #7ee787; } .agent b { color: #79c0ff; }
+  .tool { color: #8b949e; margin-top: 10px; } .tool code { color: #d2a8ff; }
+  .card { border-left: 4px solid #f85149; background: #1c1214; padding: 10px 16px; margin: 6px 0 12px; border-radius: 4px; }
+  .risk { color: #ff7b72; font-weight: 700; } .k { color: #8b949e; }
+  .ok { color: #7ee787; font-weight: 700; }
+  .caret { display: inline-block; width: 10px; height: 20px; background: #e6edf3; vertical-align: -3px; }
+  .code { font: 16.5px/27px "JetBrains Mono", "DejaVu Sans Mono", monospace; padding: 12px 0; }
+  .ln { display: flex; white-space: pre; }
+  .num { flex-shrink: 0; width: 46px; text-align: right; color: #6e7681; padding-right: 8px; }
+  .gut { flex-shrink: 0; width: 5px; margin-right: 14px; transition: none; }
+  .txt { color: #c9d1d9; overflow: hidden; min-width: 0; }
+  .kw { color: #ff7b72; } .str { color: #a5d6ff; } .fn { color: #d2a8ff; }
+  .status { position: absolute; bottom: 0; left: 0; right: 0; height: 32px; background: #1f2630; border-top: 1px solid #30363d; display: flex; justify-content: flex-end; align-items: center; padding: 0 16px; gap: 22px; font: 15px Inter, system-ui, sans-serif; color: #8b949e; }
+  .pill { padding: 2px 10px; border-radius: 6px; font-weight: 600; }
+  .hover { position: absolute; left: 70px; top: 290px; width: 560px; background: #1f2630; border: 1px solid #3d444d; border-radius: 8px; padding: 14px 16px; font: 15.5px/1.5 Inter, system-ui, sans-serif; color: #c9d1d9; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+  .hover b { color: #e6edf3; } .hover a { color: #58a6ff; text-decoration: none; }
+  .hover code { font: 14px "JetBrains Mono", monospace; color: #e6edf3; }
+  .foot { position: absolute; bottom: 28px; left: 48px; right: 48px; display: flex; justify-content: space-between; color: #8b949e; font-size: 20px; }
+  .foot code { color: #e6edf3; background: #161b22; border: 1px solid #30363d; padding: 4px 12px; border-radius: 8px; font: 19px "JetBrains Mono", monospace; }
+</style></head><body>
+<div class="top"><div class="brand">grokmap</div><div class="tag">your coding agent checks who understands the code before it edits it</div></div>
+<div class="grid">
+  <div class="pane">
+    <div class="bar"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#febc2e"></div><div class="dot" style="background:#28c840"></div><span>claude code · shopcart</span></div>
+    <div class="term" id="term"></div>
+  </div>
+  <div class="pane">
+    <div class="bar"><span style="margin-left:0">src/shopcart/payments/client.py</span></div>
+    <div class="code" id="code"></div>
+    <div class="hover" id="hover" style="display:none">
+      <b>grokmap · Nobody has checked this</b><br>
+      No one on the team has shown they understand this AI-written code.<br><br>
+      Written by Claude (committed by Priya Raman) on 2026-08-24 in <code>ffd4101c9d</code>: Payments client with retries and idempotency keys<br><br>
+      <a>Quiz me on this</a>
+    </div>
+    <div class="status"><span>Python</span><span id="st" class="pill"></span></div>
+  </div>
+</div>
+<div class="foot"><span>MCP server · VS Code extension · CLI · GitHub Action · runs locally, no API keys</span><code>uvx grokmap-mcp</code></div>
+<script>
+const CODE = [
+  [34, '    <span class="kw">def</span> <span class="fn">idempotency_key</span>(self, order_id, amount_cents):'],
+  [35, '        <span class="kw">return</span> hashlib.sha256(<span class="str">f"{order_id}:{amount_cents}"</span>.encode()).hexdigest()'],
+  [36, ''],
+  [37, '    @retry(attempts=<span class="str">3</span>, base_delay=<span class="str">0.4</span>, retry_on=(PaymentError,))'],
+  [38, '    <span class="kw">def</span> <span class="fn">charge</span>(self, order_id: str, amount_cents: int, token: str):'],
+  [39, '        <span class="kw">if</span> amount_cents &lt;= <span class="str">0</span>:'],
+  [40, '            <span class="kw">raise</span> PaymentError(<span class="str">"amount must be positive"</span>)'],
+  [41, '        body = json.dumps({<span class="str">"amount"</span>: amount_cents, <span class="str">"source"</span>: token})'],
+  [42, '        req = urllib.request.Request('],
+  [43, '            <span class="str">f"{self.base_url}/charges"</span>,'],
+  [44, '            data=body,'],
+  [45, '            method=<span class="str">"POST"</span>,'],
+  [46, '            headers={'],
+  [47, '                <span class="str">"Idempotency-Key"</span>: self.idempotency_key(order_id, amount_cents),'],
+  [48, '            },'],
+  [49, '        )'],
+  [50, '        started = time.monotonic()'],
+  [51, '        <span class="kw">try</span>:'],
+  [52, '            <span class="kw">with</span> urllib.request.urlopen(req, timeout=self.timeout) <span class="kw">as</span> resp:'],
+  [53, '                data = json.loads(resp.read())'],
+  [54, '        <span class="kw">except</span> urllib.error.HTTPError <span class="kw">as</span> exc:'],
+  [55, '            payload = json.loads(exc.read() <span class="kw">or</span> b<span class="str">"{}"</span>)'],
+];
+const RED = "#e5534b", GREEN = "#3fb950";
+function type(text, t0, t, cps = 38) { const n = Math.max(0, Math.floor((t - t0) * cps)); return text.slice(0, n); }
+function render(t) {
+  const rows = [];
+  const prompt = "add partial refunds to the payments client";
+  const typed = type(prompt, 0.4, t, 30);
+  rows.push(`<div class="row you"><b>you ›</b> ${typed}${t < 2.2 ? '<span class="caret"></span>' : ''}</div>`);
+  if (t >= 2.3) rows.push(`<div class="row tool">● calling <code>comprehension_risk</code>(paths=["src/shopcart/payments"])${t < 3.1 ? ' …' : ''}</div>`);
+  if (t >= 3.1) rows.push(`<div class="card"><div><span class="risk">risk: very high</span> <span class="k">· 35 of 86 AI lines unchecked · critical</span></div><div class="k">understood by: priya@example.com · written by: claude</div></div>`);
+  const a1 = "Heads up: 35 lines here were never checked by anyone, and this code moves money. I'll keep the change small, explain every edit, and ask Priya to review.";
+  if (t >= 4.2) rows.push(`<div class="row agent"><b>agent ›</b> ${type(a1, 4.2, t, 70)}</div>`);
+  if (t >= 6.9) rows.push(`<div class="row k">&nbsp;&nbsp;… 18 lines changed in client.py, each explained …</div>`);
+  const a2 = "Want a 2-minute quiz on the retry and idempotency logic before you commit?";
+  if (t >= 7.9) rows.push(`<div class="row agent" style="margin-top:8px"><b>agent ›</b> ${type(a2, 7.9, t, 70)}</div>`);
+  if (t >= 9.4) rows.push(`<div class="row you"><b>you ›</b> ${type("yes", 9.4, t, 12)}</div>`);
+  if (t >= 10.0) rows.push(`<div class="row tool">● <code>quiz_brief</code> → 3 questions${t >= 10.8 ? ' · answered 3' : ''}</div>`);
+  if (t >= 11.6) rows.push(`<div class="row tool">● <code>record_understanding</code>(score=0.83) → <span class="ok">understood</span></div>`);
+  if (t >= 12.4) rows.push(`<div class="row agent" style="margin-top:8px"><b>agent ›</b> ${type("Recorded. The payments module is fully understood again: debt 0%.", 12.4, t, 70)}</div>`);
+  document.getElementById("term").innerHTML = rows.join("");
+
+  // editor: red below line 40 until the quiz is recorded, then it turns green from the top down
+  const flipStart = 11.6, flipEnd = 12.6;
+  const code = CODE.map(([n, html]) => {
+    let color = "transparent";
+    if (html.trim()) {
+      if (n <= 40) color = GREEN;
+      else {
+        const frac = (n - 41) / (55 - 41);
+        color = t >= flipStart + frac * (flipEnd - flipStart) ? GREEN : RED;
+      }
+    }
+    return `<div class="ln"><span class="num">${n}</span><span class="gut" style="background:${color}"></span><span class="txt">${html || " "}</span></div>`;
+  });
+  document.getElementById("code").innerHTML = code.join("");
+  document.getElementById("hover").style.display = t >= 3.4 && t < 6.6 ? "block" : "none";
+  const st = document.getElementById("st");
+  if (t < 12.6) { st.textContent = "⚠ grokmap 52%"; st.style.cssText = "background:#3d1d1d;color:#ff7b72"; }
+  else { st.textContent = "✓ grokmap 0%"; st.style.cssText = "background:#12261a;color:#7ee787"; }
+}
+render(0);
+</script>
+</body></html>
