@@ -289,3 +289,7 @@ textarea:focus { outline: none; border-color: var(--mint); box-shadow: 0 0 0 3px
 .qactions { justify-content: flex-end; }
 .qactions .kbd { white-space: nowrap; }
 @media (max-width: 380px) { .qactions .kbd { display: none; } }
+code {
+  font-family: var(--mono); font-size: .92em; padding: 1px 5px; border-radius: 5px;
+  background: color-mix(in srgb, var(--fg) 9%, transparent);
+}

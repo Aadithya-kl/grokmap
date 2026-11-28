@@ -11,6 +11,8 @@
   const send = (type, data) => vscode.postMessage(Object.assign({ type }, data || {}));
   const esc = (s) =>
     String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  // escape, then show `code` spans the way the model writes them
+  const rich = (s) => esc(s).replace(/`([^`\n]+)`/g, "<code>$1</code>");
   const fmt = (n) => Number(n || 0).toLocaleString("en-US");
   const pct = (n) => `${Math.round(Number(n || 0))}%`;
   const plural = (n, w) => `${fmt(n)} ${w}${n === 1 ? "" : "s"}`;
@@ -267,7 +269,7 @@
     return `<div class="steps" aria-hidden="true">${q.questions.map((_, k) => `<i class="${k <= i ? "on" : ""}"></i>`).join("")}</div>
       <div class="card qcard fade-in">
         <div class="qnum">Question ${i + 1} of ${q.questions.length}${item.topic ? ` · ${esc(item.topic)}` : ""}</div>
-        <div class="qtext">${esc(item.question)}</div>
+        <div class="qtext">${rich(item.question)}</div>
         <div class="qmeta">${item.lines ? `Lines ${esc(item.lines)}` : ""}</div>
         <textarea id="answer" placeholder="Answer in your own words. Two or three sentences is plenty." aria-label="Your answer">${esc(local.drafts[i] || "")}</textarea>
         <div class="qactions">
@@ -299,10 +301,10 @@
           const g = (q.grades || [])[i] || { score: 0, feedback: "", answer: "" };
           const [cls, word] = v(g.score);
           return `<div class="card answer-card fade-in">
-            <div class="row" style="align-items:flex-start"><div class="q grow">${i + 1}. ${esc(item.question)}</div><span class="verdict ${cls}">${word}</span></div>
-            ${g.feedback ? `<div class="ans">${esc(g.feedback)}</div>` : ""}
+            <div class="row" style="align-items:flex-start"><div class="q grow">${i + 1}. ${rich(item.question)}</div><span class="verdict ${cls}">${word}</span></div>
+            ${g.feedback ? `<div class="ans">${rich(g.feedback)}</div>` : ""}
             <div class="ans-label">Your answer</div><div class="ans yours">${esc((q.answers || [])[i] || "(no answer)")}</div>
-            ${g.answer ? `<div class="ans-label">A good answer</div><div class="ans">${esc(g.answer)}</div>` : ""}
+            ${g.answer ? `<div class="ans-label">A good answer</div><div class="ans">${rich(g.answer)}</div>` : ""}
           </div>`;
         })
         .join("")}
