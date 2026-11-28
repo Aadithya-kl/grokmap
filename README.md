@@ -7,6 +7,7 @@
 [![ci](https://github.com/Aadithya-kl/grokmap/actions/workflows/ci.yml/badge.svg)](https://github.com/Aadithya-kl/grokmap/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/grokmap)](https://pypi.org/project/grokmap/)
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.Aadithya--kl%2Fgrokmap-6e56cf)](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.Aadithya-kl/grokmap)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Aadithya-kl/grokmap/badge)](https://scorecard.dev/viewer/?uri=github.com/Aadithya-kl/grokmap)
 ![python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 ![license](https://img.shields.io/badge/license-MIT-lightgrey)
