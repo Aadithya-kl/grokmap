@@ -5,9 +5,9 @@
 **Find the AI-written code nobody on your team understands, and pay it down one short quiz at a time.**
 
 [![ci](https://github.com/Aadithya-kl/grokmap/actions/workflows/ci.yml/badge.svg)](https://github.com/Aadithya-kl/grokmap/actions/workflows/ci.yml)
-[![PyPI](https://img.shields.io/pypi/v/grokmap)](https://pypi.org/project/grokmap/)
+[![PyPI](https://img.shields.io/pypi/v/grokmap-mcp?label=pypi&color=blue)](https://pypi.org/project/grokmap-mcp/)
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.Aadithya--kl%2Fgrokmap-6e56cf)](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.Aadithya-kl/grokmap)
-[![Glama](https://glama.ai/mcp/servers/Aadithya-kl/grokmap/badges/score.svg)](https://glama.ai/mcp/servers/Aadithya-kl/grokmap)
+[![Glama](https://glama.ai/mcp/servers/Aadithya-kl/grokmap/badges/score.svg?v=0.3.1)](https://glama.ai/mcp/servers/Aadithya-kl/grokmap)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Aadithya-kl/grokmap/badge)](https://scorecard.dev/viewer/?uri=github.com/Aadithya-kl/grokmap)
 ![python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
@@ -148,9 +148,9 @@ Prefer Docker? `docker build -t grokmap-mcp .` in this repo, then use `docker ru
 | `pr_comprehension` | The AI-written lines a branch adds and how many are understood. |
 | `ai_trend` | How much of the code added each week or month each agent wrote. |
 
-[![grokmap MCP server – quality and maintenance score on Glama](https://glama.ai/mcp/servers/Aadithya-kl/grokmap/badges/card.svg)](https://glama.ai/mcp/servers/Aadithya-kl/grokmap)
+[![grokmap MCP server – quality and maintenance score on Glama](https://glama.ai/mcp/servers/Aadithya-kl/grokmap/badges/card.svg?v=0.3.1)](https://glama.ai/mcp/servers/Aadithya-kl/grokmap)
 
-Plus a `quiz_me` prompt. Everything runs locally on your git history: no network calls, no API keys. It's listed in the [official MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.Aadithya-kl/grokmap) as `io.github.Aadithya-kl/grokmap`.
+Plus a `quiz_me` prompt. Everything runs locally on your git history: no network calls, no API keys. Find it in the [official MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.Aadithya-kl/grokmap) (`io.github.Aadithya-kl/grokmap`), on [Glama](https://glama.ai/mcp/servers/Aadithya-kl/grokmap) and on [cursor.directory](https://cursor.directory/plugins/grokmap).
 
 ## Quick start
 
