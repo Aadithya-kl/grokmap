@@ -1,0 +1,60 @@
+name: extension
+
+# Ships the VS Code extension for a release tag:
+#   1. build the .vsix and attach it to the GitHub release
+#   2. publish to the VS Code Marketplace with Trusted Publishing (OIDC, no token);
+#      needs a Trusted Publishing policy on the "aadithya-kl" publisher for this workflow
+#   3. publish to Open VSX (Cursor, Windsurf, VSCodium) when the OVSX_PAT secret is set
+# Runs on every v* tag; run it by hand (Actions → extension → Run workflow) to ship an existing tag.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to ship, e.g. v0.5.0"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  extension:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # attach the .vsix to the release
+      id-token: write # Marketplace Trusted Publishing
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+    defaults:
+      run:
+        working-directory: editors/vscode
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - name: The extension version matches the tag
+        run: |
+          v="$(node -p "require('./package.json').version")"
+          test "v$v" = "$TAG" || { echo "package.json says $v, tag is $TAG"; exit 1; }
+      - run: npm ci
+      - run: npm run compile && npx vsce package --no-dependencies -o "grokmap-${TAG#v}.vsix"
+      - name: Attach the extension to the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$TAG" > /dev/null 2>&1 || gh release create "$TAG" --verify-tag --title "$TAG" --notes ""
+          gh release upload "$TAG" grokmap-*.vsix --clobber
+      - name: Publish to the VS Code Marketplace (Trusted Publishing)
+        run: npx --yes @vscode/vsce@4.1.1 publish --oidc --packagePath grokmap-*.vsix --skip-duplicate
+      - name: Publish to Open VSX (if OVSX_PAT is set)
+        if: always()
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          if [ -z "$OVSX_PAT" ]; then echo "OVSX_PAT not set: skipping Open VSX"; exit 0; fi
+          npx --yes ovsx@0.10.9 create-namespace aadithya-kl -p "$OVSX_PAT" || echo "namespace already exists"
+          npx --yes ovsx@0.10.9 publish grokmap-*.vsix -p "$OVSX_PAT" --skip-duplicate

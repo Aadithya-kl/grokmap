@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The VS Code extension ships from its own workflow (`extension.yml`): it is attached to each release, published to the VS Code Marketplace with Trusted Publishing (no token), and to Open VSX when `OVSX_PAT` is set.
+
 ## 0.5.0
 
 - **VS Code extension** (`editors/vscode`): colours AI-written lines in the gutter by whether anyone understands them, with hovers naming the agent, commit and who understands it, the file's debt in the status bar, and a "Quiz me on this file" command. Follows unsaved edits. Works in VS Code, Cursor, Windsurf and VSCodium; the `.vsix` is attached to each GitHub release.
