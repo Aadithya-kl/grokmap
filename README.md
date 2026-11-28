@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/logo.svg" alt="grokmap logo" width="112">
+
 # Grokmap
 
 **Find the AI-written code nobody on your team understands, and pay it down one short quiz at a time.**

@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>grokmap: find the AI-written code nobody on your team understands</title>
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
 <meta name="description" content="grokmap measures comprehension debt: the AI-written code in your git repo that no one has shown they understand. Works with Claude Code, Copilot, Cursor and Codex. Free, open source, runs locally.">
 <link rel="canonical" href="https://aadithya-kl.github.io/grokmap/">
 <meta property="og:type" content="website">
@@ -19,7 +21,6 @@
 <meta name="twitter:description" content="Map comprehension debt from git history and pay it down with 2-minute quizzes from your coding agent.">
 <meta name="twitter:image" content="https://aadithya-kl.github.io/grokmap/social-preview.png">
 <meta name="theme-color" content="#0b0b0b">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23191919'/%3E%3Crect x='6' y='6' width='12' height='20' rx='2' fill='%23dc3c3d'/%3E%3Crect x='20' y='6' width='6' height='9' rx='2' fill='%230aac23'/%3E%3Crect x='20' y='17' width='6' height='9' rx='2' fill='%23f18a59'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="style.css">
 <script type="application/ld+json">
 {
@@ -31,7 +32,7 @@
   "description": "Measures comprehension debt: AI-written code in a git repository that no person has shown they understand. Detects commits from Claude Code, GitHub Copilot, Cursor, Codex and other coding agents, and quizzes developers through an agent skill and an MCP server.",
   "url": "https://aadithya-kl.github.io/grokmap/",
   "downloadUrl": "https://github.com/Aadithya-kl/grokmap",
-  "softwareVersion": "0.6.0",
+  "softwareVersion": "0.6.1",
   "license": "https://opensource.org/licenses/MIT",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
   "author": { "@type": "Person", "name": "K. L. Aadithya", "url": "https://github.com/Aadithya-kl" }
@@ -58,7 +59,7 @@
 </head>
 <body>
 <nav class="top"><div class="wrap">
-  <a class="logo" href="./">grokmap</a>
+  <a class="logo" href="./"><img src="./favicon.svg" alt="" width="26" height="26" style="vertical-align:-6px;margin-right:8px">grokmap</a>
   <a href="comprehension-debt/">What is comprehension debt?</a>
   <a href="study/">Study</a>
   <a href="demo/">Live demo</a>

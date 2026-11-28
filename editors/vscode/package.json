@@ -2,7 +2,7 @@
   "name": "grokmap",
   "displayName": "grokmap: who understands this code?",
   "description": "Colours AI-written code in the gutter by whether anyone on your team has shown they understand it. Hover for who wrote it and who knows it; one click for a quiz.",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "publisher": "aadithya-kl",
   "license": "MIT",
   "icon": "media/icon.png",

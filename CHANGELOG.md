@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.6.1
+
+- **New logo**: the orbit-ring G and M, in silver and mint. It is the VS Code extension's icon and appears in the README, on the website (with a favicon), and on the social preview card. Source files are in `docs/` (`logo.svg`, `logo-mark.svg`, and `logo-mark-light.svg` for light backgrounds).
+
 ## 0.6.0
 
 - **`grokmap hook install`**: a git pre-push hook that tells you when you're pushing AI-written lines nobody has shown they understand, and how to fix it (`grokmap quiz --diff <base>`). Reminds by default; `--block` stops the push (`--no-verify` still skips it). Leaves existing hooks alone unless you pass `--force`. Closes #5.
