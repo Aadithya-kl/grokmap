@@ -6,6 +6,7 @@
 
 [![ci](https://github.com/Aadithya-kl/grokmap/actions/workflows/ci.yml/badge.svg)](https://github.com/Aadithya-kl/grokmap/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/grokmap-mcp?label=pypi&color=blue)](https://pypi.org/project/grokmap-mcp/)
+[![VS Code](https://img.shields.io/visual-studio-marketplace/v/aadithya-kl.grokmap?label=VS%20Code&logo=visualstudiocode&color=0098FF)](https://marketplace.visualstudio.com/items?itemName=aadithya-kl.grokmap)
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.Aadithya--kl%2Fgrokmap-6e56cf)](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.Aadithya-kl/grokmap)
 [![Glama](https://glama.ai/mcp/servers/Aadithya-kl/grokmap/badges/score.svg?v=0.3.1)](https://glama.ai/mcp/servers/Aadithya-kl/grokmap)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Aadithya-kl/grokmap/badge)](https://scorecard.dev/viewer/?uri=github.com/Aadithya-kl/grokmap)
@@ -161,7 +162,10 @@ Plus a `quiz_me` prompt. Every tool returns structured results with a published 
 
 The [grokmap extension](editors/vscode) colours every AI-written line in the editor margin: **red** where nobody has checked it, **orange** where it was only skimmed, **yellow** where understanding is fading, **green** where someone has shown they understand it. Hover a block to see which agent wrote it, in which commit, and who understands it. The status bar shows the file's debt, and **grokmap: Quiz me on this file** hands your agent a quiz brief. It follows your edits as you type, and works in VS Code, Cursor, Windsurf and VSCodium.
 
-Install the `.vsix` from the [latest release](https://github.com/Aadithya-kl/grokmap/releases/latest) (Extensions → ⋯ → Install from VSIX), with the CLI on your PATH (`pip install grokmap`) or `grokmap.command` set to `uvx grokmap`.
+[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/aadithya-kl.grokmap?label=VS%20Code%20Marketplace&logo=visualstudiocode&color=0098FF)](https://marketplace.visualstudio.com/items?itemName=aadithya-kl.grokmap)
+[![Installs](https://img.shields.io/visual-studio-marketplace/i/aadithya-kl.grokmap?label=installs&color=0098FF)](https://marketplace.visualstudio.com/items?itemName=aadithya-kl.grokmap)
+
+Search **grokmap** in the Extensions panel and click **Install**, or run `code --install-extension aadithya-kl.grokmap`. It needs the CLI on your PATH (`pip install grokmap`), or set `grokmap.command` to `uvx grokmap`. Cursor, Windsurf and VSCodium: the extension is on its way to Open VSX; until then, install the `.vsix` from the [latest release](https://github.com/Aadithya-kl/grokmap/releases/latest) (Extensions → ⋯ → Install from VSIX).
 
 ## Quick start
 
@@ -189,6 +193,7 @@ Commit `.grokmap/ledger.jsonl` so your whole team shares one map. It's one JSON 
 | `grokmap badge` | An SVG badge for your README: ![comprehension debt badge](docs/badge-example.svg) |
 | `grokmap init` | Adds config, ledger and `.gitattributes`. |
 | `grokmap lines FILE` | Per-line states for one file, as an editor sees it (`--json`, `--stdin` for unsaved text). Used by the VS Code extension. |
+| `grokmap hook install` | Pre-push reminder when you push AI-written lines nobody has checked (`--block` to stop the push instead). |
 | `grokmap mcp` | Runs the MCP server over stdio (needs `grokmap[mcp]`). |
 
 ## In CI

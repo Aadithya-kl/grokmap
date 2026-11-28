@@ -301,6 +301,20 @@ def cmd_lines(args) -> int:
     return 0
 
 
+def cmd_hook(args) -> int:
+    from grokmap import hook
+
+    root, cfg = _context(args)
+    if args.action == "install":
+        ok, msg = hook.install(root, block=args.block, force=args.force)
+    elif args.action == "uninstall":
+        ok, msg = hook.uninstall(root)
+    else:  # run: called by git with <remote-name> <remote-url> and ref updates on stdin
+        return hook.run(root, cfg, args.remote, sys.stdin.read(), args.block)
+    print(msg, file=sys.stdout if ok else sys.stderr)
+    return 0 if ok else 1
+
+
 def cmd_init(args) -> int:
     root = gitutil.repo_root(Path(args.repo).resolve())
     cfg_path = root / ".grokmap.toml"
@@ -418,6 +432,14 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--json", action="store_true", help="machine-readable output")
     s.add_argument("--stdin", action="store_true", help="read the file's current text from stdin (an unsaved editor buffer)")
     s.set_defaults(func=cmd_lines)
+
+    s = sub.add_parser("hook", help="install a pre-push reminder for AI-written code nobody has checked")
+    s.add_argument("action", choices=("install", "uninstall", "run"))
+    s.add_argument("--block", action="store_true", help="block the push instead of only reminding (bypass with --no-verify)")
+    s.add_argument("--force", action="store_true", help="replace an existing pre-push hook not written by grokmap")
+    s.add_argument("remote", nargs="?", help=argparse.SUPPRESS)
+    s.add_argument("url", nargs="?", help=argparse.SUPPRESS)
+    s.set_defaults(func=cmd_hook)
 
     s = sub.add_parser("mcp", help='run the MCP server over stdio for coding agents (needs: pip install "grokmap[mcp]")')
     s.set_defaults(func=cmd_mcp)

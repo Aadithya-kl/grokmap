@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.6.0
+
+- **`grokmap hook install`**: a git pre-push hook that tells you when you're pushing AI-written lines nobody has shown they understand, and how to fix it (`grokmap quiz --diff <base>`). Reminds by default; `--block` stops the push (`--no-verify` still skips it). Leaves existing hooks alone unless you pass `--force`. Closes #5.
+- The VS Code extension is on the Marketplace: search **grokmap** in Extensions. The README links it.
 - The VS Code extension ships from its own workflow (`extension.yml`): it is attached to each release, published to the VS Code Marketplace with Trusted Publishing (no token), and to Open VSX (token for the first versions, then Trusted Publishing).
 
 ## 0.5.0

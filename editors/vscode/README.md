@@ -18,6 +18,10 @@ grokmap traces every line to the commit that wrote it, recognises commits made b
 
 It follows your edits as you type, and updates when anyone records a quiz (the ledger is just a file in the repo).
 
+## Install
+
+Search **grokmap** in the Extensions panel, or run `code --install-extension aadithya-kl.grokmap`.
+
 ## Requirements
 
 The `grokmap` command-line tool, version 0.5 or later:
