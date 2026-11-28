@@ -36,3 +36,21 @@ jobs:
       - uses: ./
         id: grokmap
       - run: echo "comprehension debt is ${{ steps.grokmap.outputs.debt }}%"
+
+  docker:
+    # the image directories such as Glama build to inspect the MCP server
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: docker build -t grokmap-mcp .
+      - name: The server answers tools/call inside the container
+        run: |
+          (printf '%s\n' \
+            '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}' \
+            '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+            '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"repo_status","arguments":{"top":1}}}'; sleep 15) \
+            | timeout 60 docker run -i --rm -v "$PWD:/repo" grokmap-mcp > out.jsonl || true
+          cat out.jsonl
+          grep -q '"id":2' out.jsonl && grep -q 'debt' out.jsonl

@@ -1,0 +1,8 @@
+.git
+.venv
+.grokmap
+dist
+site
+docs
+tests
+**/__pycache__

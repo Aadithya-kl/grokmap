@@ -121,6 +121,9 @@ The skill teaches the agent to quiz you. The MCP server goes further: before the
 }
 ```
 
+[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_grokmap-0098FF?logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=grokmap&config=%7B%22command%22%3A%22uvx%22%2C%22args%22%3A%5B%22grokmap-mcp%22%5D%7D)
+[![Add to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=grokmap&config=eyJjb21tYW5kIjogInV2eCIsICJhcmdzIjogWyJncm9rbWFwLW1jcCJdfQ==)
+
 That block works in Claude Desktop, Cursor (`.cursor/mcp.json`), Windsurf and most other clients. Elsewhere:
 
 ```bash
@@ -130,6 +133,8 @@ code --add-mcp '{"name":"grokmap","command":"uvx","args":["grokmap-mcp"]}'   # V
 ```
 
 Already installed grokmap? `pip install "grokmap[mcp]"` and use `grokmap mcp` as the command instead.
+
+Prefer Docker? `docker build -t grokmap-mcp .` in this repo, then use `docker run -i --rm -v "$PWD:/repo" grokmap-mcp` as the command.
 
 | Tool | What the agent gets |
 |---|---|
