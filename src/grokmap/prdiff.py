@@ -93,7 +93,7 @@ def _s(n: int) -> str:
 
 
 def render_markdown(d: PrDelta, top: int = 15) -> str:
-    out = [MARKER, "### grokmap: comprehension check", ""]
+    out = [MARKER, "### Grok-map: comprehension check", ""]
     if not d.files:
         out.append("This change adds no code lines that grokmap tracks.")
         return "\n".join(out)

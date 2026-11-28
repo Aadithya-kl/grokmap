@@ -2,7 +2,7 @@
 
 <!-- mcp-name: io.github.Aadithya-kl/grokmap -->
 
-The MCP server for [grokmap](https://github.com/Aadithya-kl/grokmap): it lets coding agents (Claude Code, Codex, Cursor, Gemini CLI, VS Code…) see which AI-written code **nobody on your team has shown they understand**, adjust how carefully they change it, and quiz you on it.
+The MCP server for [Grok-map](https://github.com/Aadithya-kl/grokmap): it lets coding agents (Claude Code, Codex, Cursor, Gemini CLI, VS Code…) see which AI-written code **nobody on your team has shown they understand**, adjust how carefully they change it, and quiz you on it.
 
 ```json
 {

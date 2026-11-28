@@ -1,8 +1,8 @@
-# grokmap for VS Code
+# Grok-map for VS Code
 
 **See which AI-written code nobody on your team understands, right in the gutter.**
 
-grokmap traces every line to the commit that wrote it, recognises commits made by AI coding agents (Claude Code, Copilot, Cursor, Codex, Aider, Devin, Gemini…), and checks them against a ledger, kept in git, of who has *shown* they understand that code. This extension paints the result next to your code:
+Grok-map traces every line to the commit that wrote it, recognises commits made by AI coding agents (Claude Code, Copilot, Cursor, Codex, Aider, Devin, Gemini…), and checks them against a ledger, kept in git, of who has *shown* they understand that code. This extension paints the result next to your code:
 
 | Gutter | Meaning |
 |---|---|
@@ -20,7 +20,7 @@ It follows your edits as you type, and updates when anyone records a quiz (the l
 
 ## Install
 
-Search **grokmap** in the Extensions panel, or run `code --install-extension aadithya-kl.grokmap`.
+Search **Grok-map** in the Extensions panel, or run `code --install-extension aadithya-kl.grokmap`.
 
 ## Requirements
 
@@ -36,11 +36,11 @@ No install? Set **grokmap.command** to `uvx grokmap`. Everything runs locally on
 
 | Setting | Default | |
 |---|---|---|
-| `grokmap.enabled` | `true` | Show the gutter colours (also: **grokmap: Toggle gutter colours**). |
-| `grokmap.command` | `grokmap` | How to run grokmap, e.g. `uvx grokmap` or a full path. |
+| `grokmap.enabled` | `true` | Show the gutter colours (also: **Grok-map: Toggle gutter colours**). |
+| `grokmap.command` | `grokmap` | How to run Grok-map, e.g. `uvx grokmap` or a full path. |
 | `grokmap.tintLines` | `false` | Also tint the background of AI-written lines. |
 | `grokmap.statusBar` | `true` | Show the file's debt in the status bar. |
 
 ## More
 
-grokmap also has a CLI with an HTML heatmap, a GitHub Action that comments on pull requests, and an MCP server so your coding agent checks who understands a file before it edits it. See the [project README](https://github.com/Aadithya-kl/grokmap).
+Grok-map also has a CLI with an HTML heatmap, a GitHub Action that comments on pull requests, and an MCP server so your coding agent checks who understands a file before it edits it. See the [project README](https://github.com/Aadithya-kl/grokmap).

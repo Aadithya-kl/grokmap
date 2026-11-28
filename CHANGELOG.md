@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.6.2
+
+- **The project is now called Grok-map** everywhere people read the name: README, website, VS Code extension, MCP server title, HTML report and PR comments. Install names and commands don't change: `pip install grokmap`, `uvx grokmap-mcp`, the `grokmap` command and the `aadithya-kl.grokmap` extension ID all stay the same, so nothing breaks.
+
 ## 0.6.1
 
 - **New logo**: the orbit-ring G and M, in silver and mint. It is the VS Code extension's icon and appears in the README, on the website (with a favicon), and on the social preview card. Source files are in `docs/` (`logo.svg`, `logo-mark.svg`, and `logo-mark-light.svg` for light backgrounds).

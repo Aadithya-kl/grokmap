@@ -30,7 +30,7 @@
 </head>
 <body>
 <nav class="top"><div class="wrap">
-  <a class="logo" href="../"><img src="../favicon.svg" alt="" width="26" height="26" style="vertical-align:-6px;margin-right:8px">grokmap</a>
+  <a class="logo" href="../"><img src="../favicon.svg" alt="" width="26" height="26" style="vertical-align:-6px;margin-right:8px">Grok-map</a>
   <a href="./">What is comprehension debt?</a>
   <a href="../study/">Study</a>
   <a href="../demo/">Live demo</a>
@@ -75,7 +75,7 @@
 <pre><code>comprehension debt = (AI-written lines nobody has shown they understand
                       + ½ × lines only skimmed or understood long ago)
                      ÷ all meaningful lines</code></pre>
-<p>This is exactly what <a href="../">grokmap</a> computes. It runs locally on any git repository:</p>
+<p>This is exactly what <a href="../">Grok-map</a> computes. It runs locally on any git repository:</p>
 <pre><code>pipx install grokmap
 grokmap status      # the number, the riskiest files, who understands what
 grokmap report      # an interactive heatmap
@@ -84,7 +84,7 @@ grokmap trend       # how the AI-written share changed month by month</code></pr
 
 <h2>How to pay it down</h2>
 <ol>
-  <li><strong>Quiz right after the change.</strong> The best moment to understand code is right after an agent writes it, while the context is fresh. grokmap's agent skill offers a two-minute quiz before you commit, on exactly the lines you haven't seen.</li>
+  <li><strong>Quiz right after the change.</strong> The best moment to understand code is right after an agent writes it, while the context is fresh. Grok-map's agent skill offers a two-minute quiz before you commit, on exactly the lines you haven't seen.</li>
   <li><strong>Start with the riskiest files.</strong> Debt in payment, authentication or data-migration code matters more than debt in a test fixture. Mark critical paths and look at those first.</li>
   <li><strong>Make it visible in pull requests.</strong> A PR comment saying "this change adds 340 AI-written lines, 0 understood" changes behavior more than any policy document.</li>
   <li><strong>Ask, don't just delegate.</strong> Using the agent to explain code, rather than only to produce it, builds understanding instead of eroding it.</li>
@@ -99,11 +99,11 @@ grokmap trend       # how the AI-written share changed month by month</code></pr
 </ul>
 
 <h2>Try it on your repository</h2>
-<p><a href="../demo/">See a live example report</a>, read <a href="../study/">how much of popular open-source projects is AI-written</a>, or install <a href="https://github.com/Aadithya-kl/grokmap">grokmap from GitHub</a>. It's free, MIT-licensed, and makes no network calls.</p>
+<p><a href="../demo/">See a live example report</a>, read <a href="../study/">how much of popular open-source projects is AI-written</a>, or install <a href="https://github.com/Aadithya-kl/grokmap">Grok-map from GitHub</a>. It's free, MIT-licensed, and makes no network calls.</p>
 </article>
 
 <footer><div class="wrap">
-  <span>grokmap · MIT license · by <a href="https://github.com/Aadithya-kl">K. L. Aadithya</a></span>
+  <span>Grok-map · MIT license · by <a href="https://github.com/Aadithya-kl">K. L. Aadithya</a></span>
   <a href="../">Home</a><a href="../study/">Study</a><a href="https://github.com/Aadithya-kl/grokmap">GitHub</a>
 </div></footer>
 </body>

@@ -29,7 +29,7 @@ let enabled = true;
 let warnedMissing = false;
 
 export function activate(context: vscode.ExtensionContext): void {
-  output = vscode.window.createOutputChannel("grokmap");
+  output = vscode.window.createOutputChannel("Grok-map");
   status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 90);
   status.command = "grokmap.who";
   enabled = config().get<boolean>("enabled", true);
@@ -40,7 +40,7 @@ export function activate(context: vscode.ExtensionContext): void {
     status,
     vscode.commands.registerCommand("grokmap.toggle", () => {
       enabled = !enabled;
-      vscode.window.setStatusBarMessage(`grokmap colours ${enabled ? "on" : "off"}`, 2500);
+      vscode.window.setStatusBarMessage(`Grok-map colours ${enabled ? "on" : "off"}`, 2500);
       refreshVisible();
     }),
     vscode.commands.registerCommand("grokmap.refresh", () => refreshVisible(true)),
@@ -217,7 +217,7 @@ function updateStatus(): void {
 async function quiz(arg?: vscode.Uri | string): Promise<void> {
   const uri = typeof arg === "string" ? vscode.Uri.parse(arg) : arg ?? vscode.window.activeTextEditor?.document.uri;
   if (!uri || uri.scheme !== "file") {
-    void vscode.window.showInformationMessage("Open a file in a git repository to get a grokmap quiz.");
+    void vscode.window.showInformationMessage("Open a file in a git repository to get a Grok-map quiz.");
     return;
   }
   const doc = vscode.workspace.textDocuments.find((d) => d.uri.toString() === uri.toString());
@@ -227,7 +227,7 @@ async function quiz(arg?: vscode.Uri | string): Promise<void> {
     // quiz takes repository-relative paths; `lines` tells us this file's
     const info = cache.get(uri.toString()) ?? (JSON.parse(await run(["lines", uri.fsPath, "--json"], cwd)) as FileData);
     if (!info.tracked) {
-      void vscode.window.showInformationMessage(`grokmap: ${info.note ?? "this file is not tracked."}`);
+      void vscode.window.showInformationMessage(`Grok-map: ${info.note ?? "this file is not tracked."}`);
       return;
     }
     const brief = await run(["quiz", info.path], cwd);
@@ -240,7 +240,7 @@ async function quiz(arg?: vscode.Uri | string): Promise<void> {
   } catch (err) {
     const e = err as NodeJS.ErrnoException & { stderr?: string };
     if (e.code === "ENOENT") warnMissing();
-    else void vscode.window.showErrorMessage(`grokmap quiz failed: ${e.stderr || e.message}`);
+    else void vscode.window.showErrorMessage(`Grok-map quiz failed: ${e.stderr || e.message}`);
   }
 }
 
@@ -248,7 +248,7 @@ async function who(): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   const data = editor ? cache.get(editor.document.uri.toString()) : undefined;
   if (!editor || !data?.summary) {
-    void vscode.window.showInformationMessage("grokmap has no data for this file yet.");
+    void vscode.window.showInformationMessage("Grok-map has no data for this file yet.");
     return;
   }
   const s = data.summary;
@@ -258,6 +258,6 @@ async function who(): Promise<void> {
     ...Object.entries(s.people).map(([p, n]) => ({ label: `$(person) ${p}`, description: `understands ${n} lines` })),
     { label: "$(mortar-board) Quiz me on this file", description: "grokmap.quiz" },
   ];
-  const pick = await vscode.window.showQuickPick(items, { title: `grokmap · ${data.path}` });
+  const pick = await vscode.window.showQuickPick(items, { title: `Grok-map · ${data.path}` });
   if (pick?.description === "grokmap.quiz") void quiz(editor.document.uri);
 }

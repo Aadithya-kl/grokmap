@@ -1,6 +1,6 @@
-# Contributing to grokmap
+# Contributing to Grok-map
 
-Thanks for helping. grokmap is small on purpose: one Python package with no dependencies, a single-file HTML report, and an agent skill. Contributions that keep it that way are the easiest to merge.
+Thanks for helping. Grok-map is small on purpose: one Python package with no dependencies, a single-file HTML report, and an agent skill. Contributions that keep it that way are the easiest to merge.
 
 ## Set up
 
@@ -73,4 +73,4 @@ pytest
 
 ## Reporting bugs
 
-Open an issue with your grokmap version (`grokmap --version`), the command you ran and what you expected. For detection problems, include the commit message and author line (anonymize them if you need to).
+Open an issue with your Grok-map version (`grokmap --version`), the command you ran and what you expected. For detection problems, include the commit message and author line (anonymize them if you need to).

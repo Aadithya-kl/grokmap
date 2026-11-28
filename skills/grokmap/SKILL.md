@@ -3,9 +3,9 @@ name: grokmap
 description: Quiz the user on AI-written code and track comprehension debt with the grokmap CLI. Use when the user says "quiz me", "do I understand this", "check my understanding", "comprehension debt", "grokmap", or asks for a map of which code nobody understands. Also offer a short quiz (one line, never forced) after you finish a substantial change the user will commit, such as a new feature, a non-trivial fix or a refactor.
 ---
 
-# grokmap: pay down comprehension debt
+# Grok-map: pay down comprehension debt
 
-grokmap measures **comprehension debt**: code an AI agent wrote that no person on the team has shown they understand. Your job in this skill is to run short, honest quizzes and record the results, so the team's map of what it understands stays true.
+Grok-map measures **comprehension debt**: code an AI agent wrote that no person on the team has shown they understand. Your job in this skill is to run short, honest quizzes and record the results, so the team's map of what it understands stays true.
 
 ## Setup (once per machine)
 
@@ -15,16 +15,16 @@ Check the CLI is available, and install it if not:
 grokmap --version || pipx install grokmap || pip install --user grokmap
 ```
 
-If none of those work, `uvx grokmap <command>` runs it without installing. In a repo that has never used grokmap, run `grokmap init` (it adds `.grokmap.toml`, the ledger and a merge rule) and tell the user what it created.
+If none of those work, `uvx grokmap <command>` runs it without installing. In a repo that has never used Grok-map, run `grokmap init` (it adds `.grokmap.toml`, the ledger and a merge rule) and tell the user what it created.
 
-If the grokmap MCP tools are connected (`comprehension_risk`, `quiz_brief`, `record_understanding`…), use them instead of the CLI: they return the same data as structured results. Before you change a file, `comprehension_risk` tells you how carefully to tread: at *high* or *very high*, keep the diff small, explain what you changed and why, and offer a quiz afterwards.
+If the Grok-map MCP tools are connected (`comprehension_risk`, `quiz_brief`, `record_understanding`…), use them instead of the CLI: they return the same data as structured results. Before you change a file, `comprehension_risk` tells you how carefully to tread: at *high* or *very high*, keep the diff small, explain what you changed and why, and offer a quiz afterwards.
 
 ## When to use it
 
 | The user… | Do this |
 |---|---|
 | asks to be quizzed on a file, folder or change | `grokmap quiz <path>` (or `--uncommitted` / `--diff main`), then run the quiz below |
-| just accepted a substantial change from you | Offer once, in one line: "Want a 2-minute quiz on this before you commit? It keeps grokmap's map honest." If they decline, drop it. |
+| just accepted a substantial change from you | Offer once, in one line: "Want a 2-minute quiz on this before you commit? It keeps Grok-map's map honest." If they decline, drop it. |
 | asks how much of the code is understood, or where the risk is | `grokmap status`; for the visual map `grokmap report --open` |
 | asks who knows a part of the code | `grokmap who <path>` |
 | is about to open or merge a PR | `grokmap diff --base main` shows the AI lines the branch adds and how many are understood; offer a quiz on the unchecked ones |
@@ -60,7 +60,7 @@ Do not offer a quiz after trivial edits (typos, renames, formatting, one-line co
 - **Never mark your own code as understood** because you wrote it. The ledger is about people.
 - Keep it short. A quiz is 2 to 5 questions. If the brief says it was cut down, finish this round and offer another later.
 - If the user is frustrated or busy, stop the quiz at once and do not record anything.
-- grokmap only reads git history and local files. Do not send code anywhere to grade answers; grade them yourself.
+- Grok-map only reads git history and local files. Do not send code anywhere to grade answers; grade them yourself.
 
 ## Reading `grokmap status`
 

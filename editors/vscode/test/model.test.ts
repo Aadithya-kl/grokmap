@@ -43,7 +43,7 @@ test("hover names the agent, the commit and offers a quiz only when useful", () 
 test("status bar only appears for files with AI-written code", () => {
   const base: FileData = { path: "a.py", tracked: true, lines: [] };
   const summary = { lines: 10, human: 4, ai: 6, understood: 2, fading: 0, skimmed: 0, unread: 4, debt_pct: 40, tools: {}, people: {} };
-  assert.equal(statusText({ ...base, summary }), "grokmap 40%");
+  assert.equal(statusText({ ...base, summary }), "Grok-map 40%");
   assert.equal(statusText({ ...base, summary: { ...summary, ai: 0 } }), undefined);
   assert.equal(statusText({ ...base, tracked: false }), undefined);
 });

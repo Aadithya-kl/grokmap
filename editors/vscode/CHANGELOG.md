@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.2
+
+- Renamed to Grok-map. The extension ID stays `aadithya-kl.grokmap`, so updates arrive as usual.
+
 ## 0.6.1
 
 - New icon.

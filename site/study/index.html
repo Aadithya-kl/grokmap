@@ -10,7 +10,7 @@
 <link rel="canonical" href="https://aadithya-kl.github.io/grokmap/study/">
 <meta property="og:type" content="article">
 <meta property="og:title" content="How much of popular open-source code is AI-written?">
-<meta property="og:description" content="AI co-authored commits in 18 well-known repositories, 2025 vs late 2026, measured with grokmap.">
+<meta property="og:description" content="AI co-authored commits in 18 well-known repositories, 2025 vs late 2026, measured with Grok-map.">
 <meta property="og:url" content="https://aadithya-kl.github.io/grokmap/study/">
 <meta property="og:image" content="https://aadithya-kl.github.io/grokmap/social-preview.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -29,7 +29,7 @@
 </head>
 <body>
 <nav class="top"><div class="wrap">
-  <a class="logo" href="../"><img src="../favicon.svg" alt="" width="26" height="26" style="vertical-align:-6px;margin-right:8px">grokmap</a>
+  <a class="logo" href="../"><img src="../favicon.svg" alt="" width="26" height="26" style="vertical-align:-6px;margin-right:8px">Grok-map</a>
   <a href="../comprehension-debt/">What is comprehension debt?</a>
   <a href="./">Study</a>
   <a href="../demo/">Live demo</a>
@@ -38,7 +38,7 @@
 
 <article style="max-width:960px">
 <h1>How much of popular open-source code is AI-written?</h1>
-<div class="meta">A study of 18 well-known repositories · 2026-11-27 · measured with grokmap 0.2.0</div>
+<div class="meta">A study of 18 well-known repositories · 2026-11-27 · measured with Grok-map 0.2.0</div>
 
 <div class="tldr"><strong>Key findings</strong>
 <ul class="findings">
@@ -60,13 +60,13 @@
 <p>Commits: non-merge commits since January 2025. AI columns: share of commits co-authored by an AI agent. AI lines now: share of current lines last changed by such a commit (only measured for seven repositories).</p><div style="overflow-x:auto"><table><thead><tr><th>Repository</th><th class="num">Commits</th><th class="num">AI, 2025</th><th class="num">AI, Aug–Oct 26</th><th class="num">AI lines now</th><th>Main agents</th></tr></thead><tbody><tr><td><a href="https://github.com/modelcontextprotocol/servers">modelcontextprotocol/servers</a></td><td class="num">2,439</td><td class="num">4.3%</td><td class="num"><b>94.2%</b></td><td class="num">92.5%</td><td class="agents">claude, copilot, cursor +1</td></tr><tr><td><a href="https://github.com/microsoft/vscode">microsoft/vscode</a></td><td class="num">38,459</td><td class="num">4.9%</td><td class="num"><b>74.1%</b></td><td class="num">–</td><td class="agents">copilot, claude, cursor +1</td></tr><tr><td><a href="https://github.com/github/github-mcp-server">github/github-mcp-server</a></td><td class="num">1,227</td><td class="num">14.3%</td><td class="num"><b>69.3%</b></td><td class="num">70%</td><td class="agents">copilot, claude, codex +1</td></tr><tr><td><a href="https://github.com/anthropics/claude-agent-sdk-python">anthropics/claude-agent-sdk-python</a></td><td class="num">975</td><td class="num">47.3%</td><td class="num"><b>21.6%</b></td><td class="num">27%</td><td class="agents">claude</td></tr><tr><td><a href="https://github.com/huggingface/transformers">huggingface/transformers</a></td><td class="num">7,411</td><td class="num">0.2%</td><td class="num"><b>20.2%</b></td><td class="num">–</td><td class="agents">claude, cursor, codex +2</td></tr><tr><td><a href="https://github.com/supabase/supabase">supabase/supabase</a></td><td class="num">10,246</td><td class="num">0.6%</td><td class="num"><b>16.8%</b></td><td class="num">–</td><td class="agents">claude, cursor, copilot +2</td></tr><tr><td><a href="https://github.com/excalidraw/excalidraw">excalidraw/excalidraw</a></td><td class="num">548</td><td class="num">0.0%</td><td class="num"><b>9.9%</b></td><td class="num">–</td><td class="agents">claude, copilot, cursor</td></tr><tr><td><a href="https://github.com/block/goose">block/goose</a></td><td class="num">5,961</td><td class="num">1.5%</td><td class="num"><b>7.3%</b></td><td class="num">12.2%</td><td class="agents">claude, copilot, cursor</td></tr><tr><td><a href="https://github.com/charmbracelet/crush">charmbracelet/crush</a></td><td class="num">4,346</td><td class="num">1.2%</td><td class="num"><b>5.1%</b></td><td class="num">14.6%</td><td class="agents">crush, claude, copilot +2</td></tr><tr><td><a href="https://github.com/astral-sh/uv">astral-sh/uv</a></td><td class="num">6,182</td><td class="num">0.3%</td><td class="num"><b>4.2%</b></td><td class="num">4.6%</td><td class="agents">claude, codex, copilot</td></tr><tr><td><a href="https://github.com/zed-industries/zed">zed-industries/zed</a></td><td class="num">16,919</td><td class="num">0.2%</td><td class="num"><b>3.0%</b></td><td class="num">–</td><td class="agents">claude, copilot, cursor +2</td></tr><tr><td><a href="https://github.com/oven-sh/bun">oven-sh/bun</a></td><td class="num">7,567</td><td class="num">14.0%</td><td class="num"><b>2.8%</b></td><td class="num">–</td><td class="agents">claude, cursor, ai +1</td></tr><tr><td><a href="https://github.com/vercel/ai">vercel/ai</a></td><td class="num">7,456</td><td class="num">0.3%</td><td class="num"><b>2.7%</b></td><td class="num">–</td><td class="agents">claude, cursor, copilot +1</td></tr><tr><td><a href="https://github.com/astral-sh/ruff">astral-sh/ruff</a></td><td class="num">9,559</td><td class="num">0.1%</td><td class="num"><b>0.9%</b></td><td class="num">–</td><td class="agents">claude, codex</td></tr><tr><td><a href="https://github.com/langchain-ai/langchain">langchain-ai/langchain</a></td><td class="num">4,958</td><td class="num">1.0%</td><td class="num"><b>0.8%</b></td><td class="num">–</td><td class="agents">claude, copilot</td></tr><tr><td><a href="https://github.com/sst/opencode">sst/opencode</a></td><td class="num">23,341</td><td class="num">0.2%</td><td class="num"><b>0.2%</b></td><td class="num">–</td><td class="agents">claude, copilot, cursor +2</td></tr><tr><td><a href="https://github.com/openai/codex">openai/codex</a></td><td class="num">14,310</td><td class="num">6.2%</td><td class="num"><b>0.0%</b></td><td class="num">–</td><td class="agents">codex, claude, copilot</td></tr><tr><td><a href="https://github.com/denoland/deno">denoland/deno</a></td><td class="num">4,461</td><td class="num">0.5%</td><td class="num"><b>0.0%</b></td><td class="num">–</td><td class="agents">claude, copilot, cursor +1</td></tr></tbody></table></div>
 
 <h2>Why this matters</h2>
-<p>Writing code is no longer the bottleneck; understanding it is. When most new commits in a project are co-authored by an agent, the question that matters for maintainers is not "who typed this?" but "does anyone here understand it well enough to debug it?". That gap is <a href="../comprehension-debt/">comprehension debt</a>, and it is invisible in the usual metrics. This study only measures the first half, AI involvement. The second half, understanding, can't be seen from outside a team, which is why grokmap pairs these numbers with an opt-in ledger of quiz results.</p>
+<p>Writing code is no longer the bottleneck; understanding it is. When most new commits in a project are co-authored by an agent, the question that matters for maintainers is not "who typed this?" but "does anyone here understand it well enough to debug it?". That gap is <a href="../comprehension-debt/">comprehension debt</a>, and it is invisible in the usual metrics. This study only measures the first half, AI involvement. The second half, understanding, can't be seen from outside a team, which is why Grok-map pairs these numbers with an opt-in ledger of quiz results.</p>
 
 <h2>Method</h2>
 <ul>
   <li><strong>Repositories:</strong> 18 widely used open-source projects across editors, developer tools, AI frameworks and agent tooling, chosen for popularity and active development, not for known AI use. Default branch, non-merge commits, 166,365 commits since January 2025.</li>
-  <li><strong>Detection:</strong> grokmap's built-in signatures: co-author trailers (<code>Co-Authored-By: Claude</code>, <code>Co-authored-by: Copilot</code>, Codex, Cursor, Charm Crush and others), agent bot authors (Copilot coding agent, Devin, Jules…), and footers such as "Generated with Claude Code". The full list is in <a href="https://github.com/Aadithya-kl/grokmap/blob/main/src/grokmap/detect.py">detect.py</a>.</li>
-  <li><strong>Line attribution:</strong> <code>git blame -w</code> at HEAD, ignoring blank lines and lone punctuation, with grokmap's default exclusions (lock files, build output, vendored code, media).</li>
+  <li><strong>Detection:</strong> Grok-map's built-in signatures: co-author trailers (<code>Co-Authored-By: Claude</code>, <code>Co-authored-by: Copilot</code>, Codex, Cursor, Charm Crush and others), agent bot authors (Copilot coding agent, Devin, Jules…), and footers such as "Generated with Claude Code". The full list is in <a href="https://github.com/Aadithya-kl/grokmap/blob/main/src/grokmap/detect.py">detect.py</a>.</li>
+  <li><strong>Line attribution:</strong> <code>git blame -w</code> at HEAD, ignoring blank lines and lone punctuation, with Grok-map's default exclusions (lock files, build output, vendored code, media).</li>
 </ul>
 
 <h2>Limitations (please read before quoting)</h2>
@@ -86,7 +86,7 @@ grokmap trend --by month  # AI vs human lines added per month, by agent</code></
 </article>
 
 <footer><div class="wrap">
-  <span>grokmap · MIT license · by <a href="https://github.com/Aadithya-kl">K. L. Aadithya</a></span>
+  <span>Grok-map · MIT license · by <a href="https://github.com/Aadithya-kl">K. L. Aadithya</a></span>
   <a href="../">Home</a><a href="../comprehension-debt/">Comprehension debt</a><a href="https://github.com/Aadithya-kl/grokmap">GitHub</a>
 </div></footer>
 </body>

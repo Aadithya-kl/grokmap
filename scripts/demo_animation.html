@@ -32,7 +32,7 @@
   .foot { position: absolute; bottom: 28px; left: 48px; right: 48px; display: flex; justify-content: space-between; color: #8b949e; font-size: 20px; }
   .foot code { color: #e6edf3; background: #161b22; border: 1px solid #30363d; padding: 4px 12px; border-radius: 8px; font: 19px "JetBrains Mono", monospace; }
 </style></head><body>
-<div class="top"><div class="brand">grokmap</div><div class="tag">your coding agent checks who understands the code before it edits it</div></div>
+<div class="top"><div class="brand">Grok-map</div><div class="tag">your coding agent checks who understands the code before it edits it</div></div>
 <div class="grid">
   <div class="pane">
     <div class="bar"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#febc2e"></div><div class="dot" style="background:#28c840"></div><span>claude code · shopcart</span></div>
@@ -112,8 +112,8 @@ function render(t) {
   document.getElementById("code").innerHTML = code.join("");
   document.getElementById("hover").style.display = t >= 3.4 && t < 6.6 ? "block" : "none";
   const st = document.getElementById("st");
-  if (t < 12.6) { st.textContent = "⚠ grokmap 52%"; st.style.cssText = "background:#3d1d1d;color:#ff7b72"; }
-  else { st.textContent = "✓ grokmap 0%"; st.style.cssText = "background:#12261a;color:#7ee787"; }
+  if (t < 12.6) { st.textContent = "⚠ Grok-map 52%"; st.style.cssText = "background:#3d1d1d;color:#ff7b72"; }
+  else { st.textContent = "✓ Grok-map 0%"; st.style.cssText = "background:#12261a;color:#7ee787"; }
 }
 render(0);
 </script>

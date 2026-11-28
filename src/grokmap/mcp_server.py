@@ -21,7 +21,7 @@ except ImportError as exc:  # pragma: no cover - exercised by the CLI message te
     raise ImportError('grokmap\'s MCP server needs the "mcp" package: pip install "grokmap[mcp]"') from exc
 
 INSTRUCTIONS = """\
-grokmap tracks comprehension debt: code written by AI coding agents that no person on the team has shown they understand.
+Grok-map tracks comprehension debt: code written by AI coding agents that no person on the team has shown they understand.
 
 How to use these tools well:
 - Before you change existing code in a non-trivial way, call comprehension_risk on the files or folders involved. \
@@ -57,7 +57,7 @@ RepoArg = Annotated[str | None, Field(description="Path inside the git repositor
 
 server = MCPServer(
     "grokmap",
-    title="grokmap: comprehension debt",
+    title="Grok-map: comprehension debt",
     description="See which AI-written code nobody on the team understands, and pay it down with quizzes.",
     instructions=INSTRUCTIONS,
     website_url="https://aadithya-kl.github.io/grokmap/",
@@ -218,9 +218,9 @@ def ai_trend(
 
 @server.prompt(title="Quiz me on what you just wrote")
 def quiz_me() -> str:
-    """Start a short grokmap quiz on the uncommitted changes."""
+    """Start a short Grok-map quiz on the uncommitted changes."""
     return (
-        "Call grokmap's quiz_brief tool with uncommitted=true. Then quiz me on that code exactly as the brief says: "
+        "Call Grok-map's quiz_brief tool with uncommitted=true. Then quiz me on that code exactly as the brief says: "
         "one question at a time, wait for my answer, grade it honestly, explain the right answer briefly. At the end, "
         "call record_understanding with the paths from the brief and my average score, and tell me my score."
     )

@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "grokmap-mcp"
-version = "0.6.1"
-description = "MCP server for grokmap: lets coding agents see which AI-written code nobody on the team understands, and quiz you on it."
+version = "0.6.2"
+description = "MCP server for Grok-map: lets coding agents see which AI-written code nobody on the team understands, and quiz you on it."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
@@ -18,7 +18,7 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "Topic :: Software Development :: Quality Assurance",
 ]
-dependencies = ["grokmap[mcp]==0.6.1"]
+dependencies = ["grokmap[mcp]==0.6.2"]
 
 [project.urls]
 Homepage = "https://aadithya-kl.github.io/grokmap/"

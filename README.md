@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="docs/logo.svg" alt="grokmap logo" width="112">
+<img src="docs/logo.svg" alt="Grok-map logo" width="112">
 
-# Grokmap
+# Grok-map
 
 **Find the AI-written code nobody on your team understands, and pay it down one short quiz at a time.**
 
@@ -18,7 +18,7 @@
 
 **[▶ Live demo](https://aadithya-kl.github.io/grokmap/demo/)** · [Website](https://aadithya-kl.github.io/grokmap/) · [Study: how much of open source is AI-written?](https://aadithya-kl.github.io/grokmap/study/) · [Install](#install) · [Agent skill](#add-the-skill-to-your-coding-agent) · [MCP server](#mcp-server) · [VS Code](#vs-code-extension) · [CI and PR comments](#in-ci)
 
-<img src="docs/demo.gif" alt="A coding agent calls grokmap before editing a payments module, sees risk: very high because 35 AI-written lines were never checked, keeps the change small, quizzes the developer and records the result; in the editor the gutter turns from red to green" width="900">
+<img src="docs/demo.gif" alt="A coding agent calls Grok-map before editing a payments module, sees risk: very high because 35 AI-written lines were never checked, keeps the change small, quizzes the developer and records the result; in the editor the gutter turns from red to green" width="900">
 
 </div>
 
@@ -28,18 +28,18 @@ Coding agents now write a large share of the code we ship. The tests pass, the d
 
 That gap has a name: **comprehension debt**, the difference between how much code is in your system and how much of it any person actually understands. It doesn't show up in linters, coverage or code review dashboards.
 
-**grokmap measures it.** It traces every line in your repo to the commit that wrote it, recognises commits made by AI agents (Claude Code, Copilot, Cursor, Codex, Aider, Devin, Gemini…), and checks them against a shared ledger of who has *shown* they understand that code. Then it draws you a map.
+**Grok-map measures it.** It traces every line in your repo to the commit that wrote it, recognises commits made by AI agents (Claude Code, Copilot, Cursor, Codex, Aider, Devin, Gemini…), and checks them against a shared ledger of who has *shown* they understand that code. Then it draws you a map.
 
 <p align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/report-dark.png">
-  <img src="docs/report-light.png" alt="grokmap report: 35% comprehension debt, a bar of every line by who understands it, a weekly chart of who wrote the code, and a treemap of files colored by debt" width="820">
+  <img src="docs/report-light.png" alt="Grok-map report: 35% comprehension debt, a bar of every line by who understands it, a weekly chart of who wrote the code, and a treemap of files colored by debt" width="820">
 </picture>
 </p>
 
 ```
 $ grokmap status
-grokmap · shopcart @ c3088b29ff
+Grok-map · shopcart @ c3088b29ff
 
   Comprehension debt   34.5%
   Lines scanned        255 in 12 files
@@ -67,7 +67,7 @@ New to the idea? [What is comprehension debt, and how do you measure it?](https:
 
 ## How you pay it down: your agent quizzes you
 
-grokmap ships an **agent skill**. After your coding agent writes something substantial, it offers a two-minute quiz on exactly the lines you haven't shown you understand, grades you honestly, and records the result:
+Grok-map ships an **agent skill**. After your coding agent writes something substantial, it offers a two-minute quiz on exactly the lines you haven't shown you understand, grades you honestly, and records the result:
 
 ```text
 you    > yes, quiz me before I commit
@@ -141,7 +141,7 @@ codex mcp add grokmap -- uvx grokmap-mcp                   # Codex CLI
 code --add-mcp '{"name":"grokmap","command":"uvx","args":["grokmap-mcp"]}'   # VS Code
 ```
 
-Already installed grokmap? `pip install "grokmap[mcp]"` and use `grokmap mcp` as the command instead.
+Already installed Grok-map? `pip install "grokmap[mcp]"` and use `grokmap mcp` as the command instead.
 
 Prefer Docker? `docker build -t grokmap-mcp .` in this repo, then use `docker run -i --rm -v "$PWD:/repo" grokmap-mcp` as the command.
 
@@ -155,19 +155,19 @@ Prefer Docker? `docker build -t grokmap-mcp .` in this repo, then use `docker ru
 | `pr_comprehension` | The AI-written lines a branch adds and how many are understood. |
 | `ai_trend` | How much of the code added each week or month each agent wrote. |
 
-[![grokmap MCP server – quality and maintenance score on Glama](https://glama.ai/mcp/servers/Aadithya-kl/grokmap/badges/card.svg?v=0.3.1)](https://glama.ai/mcp/servers/Aadithya-kl/grokmap)
+[![Grok-map MCP server – quality and maintenance score on Glama](https://glama.ai/mcp/servers/Aadithya-kl/grokmap/badges/card.svg?v=0.3.1)](https://glama.ai/mcp/servers/Aadithya-kl/grokmap)
 
 Plus a `quiz_me` prompt. Every tool returns structured results with a published output schema, so agents read fields instead of parsing text. Everything runs locally on your git history: no network calls, no API keys. Find it in the [official MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.Aadithya-kl/grokmap) (`io.github.Aadithya-kl/grokmap`), on [Glama](https://glama.ai/mcp/servers/Aadithya-kl/grokmap) and on [cursor.directory](https://cursor.directory/plugins/grokmap).
 
 <a id="vs-code-extension"></a>
 ### VS Code extension: see it in the gutter
 
-The [grokmap extension](editors/vscode) colours every AI-written line in the editor margin: **red** where nobody has checked it, **orange** where it was only skimmed, **yellow** where understanding is fading, **green** where someone has shown they understand it. Hover a block to see which agent wrote it, in which commit, and who understands it. The status bar shows the file's debt, and **grokmap: Quiz me on this file** hands your agent a quiz brief. It follows your edits as you type, and works in VS Code, Cursor, Windsurf and VSCodium.
+The [Grok-map extension](editors/vscode) colours every AI-written line in the editor margin: **red** where nobody has checked it, **orange** where it was only skimmed, **yellow** where understanding is fading, **green** where someone has shown they understand it. Hover a block to see which agent wrote it, in which commit, and who understands it. The status bar shows the file's debt, and **Grok-map: Quiz me on this file** hands your agent a quiz brief. It follows your edits as you type, and works in VS Code, Cursor, Windsurf and VSCodium.
 
 [![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/aadithya-kl.grokmap?label=VS%20Code%20Marketplace&logo=visualstudiocode&color=0098FF)](https://marketplace.visualstudio.com/items?itemName=aadithya-kl.grokmap)
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/aadithya-kl.grokmap?label=installs&color=0098FF)](https://marketplace.visualstudio.com/items?itemName=aadithya-kl.grokmap)
 
-Search **grokmap** in the Extensions panel and click **Install**, or run `code --install-extension aadithya-kl.grokmap`. It needs the CLI on your PATH (`pip install grokmap`), or set `grokmap.command` to `uvx grokmap`. Cursor, Windsurf and VSCodium: the extension is on its way to Open VSX; until then, install the `.vsix` from the [latest release](https://github.com/Aadithya-kl/grokmap/releases/latest) (Extensions → ⋯ → Install from VSIX).
+Search **Grok-map** in the Extensions panel and click **Install**, or run `code --install-extension aadithya-kl.grokmap`. It needs the CLI on your PATH (`pip install grokmap`), or set `grokmap.command` to `uvx grokmap`. Cursor, Windsurf and VSCodium: the extension is on its way to Open VSX; until then, install the `.vsix` from the [latest release](https://github.com/Aadithya-kl/grokmap/releases/latest) (Extensions → ⋯ → Install from VSIX).
 
 ## Quick start
 
@@ -221,7 +221,7 @@ jobs:
 
 On every pull request it posts **one comment** (and keeps it up to date) like this:
 
-> ### grokmap: comprehension check
+> ### Grok-map: comprehension check
 >
 > This change adds **5 AI-written lines** (claude 5) and 1 human-written line. **4 of the AI lines (80%)** have been understood by someone on the team.
 >
@@ -282,15 +282,15 @@ Lock files, build output, vendored code, minified files, media and binaries are 
 
 ## FAQ
 
-**Is this surveillance?** No. grokmap measures *code*, not people. Nobody is quizzed unless they ask, the ledger only holds what people chose to record, and the main number is about the codebase. If your team would use it to rank people, don't adopt it.
+**Is this surveillance?** No. Grok-map measures *code*, not people. Nobody is quizzed unless they ask, the ledger only holds what people chose to record, and the main number is about the codebase. If your team would use it to rank people, don't adopt it.
 
-**What about AI code pasted from a chat window?** grokmap can't see it, so it counts as human-written. Detection is deliberately conservative: it only flags commits with real evidence and never guesses from code style. Adding an `AI-Assisted:` trailer (or your own pattern) fixes this going forward.
+**What about AI code pasted from a chat window?** Grok-map can't see it, so it counts as human-written. Detection is deliberately conservative: it only flags commits with real evidence and never guesses from code style. Adding an `AI-Assisted:` trailer (or your own pattern) fixes this going forward.
 
 **Can I game it?** You can mark code as understood without a quiz, the same way you can approve a PR without reading it. The point is an honest map for your own team, and the skill is written to never record a score the person didn't earn.
 
-**Does the quiz send my code anywhere?** grokmap itself makes no network calls. Your coding agent reads the brief like any other file it already works with.
+**Does the quiz send my code anywhere?** Grok-map itself makes no network calls. Your coding agent reads the brief like any other file it already works with.
 
-## Why "grokmap"?
+## Why "Grok-map"?
 
 To *grok* is to understand something so thoroughly it becomes part of you. This is a map of what your team groks.
 

@@ -67,7 +67,7 @@ const EXPLAIN: Record<State, string> = {
   fading: "Someone understood it, but more than 180 days ago.",
   understood: "Someone passed a quiz, explained it or paired on it.",
   human: "Written by a person.",
-  uncommitted: "grokmap will track this line once it is committed.",
+  uncommitted: "Grok-map will track this line once it is committed.",
 };
 
 /**
@@ -117,7 +117,7 @@ export function agentName(agent: string | undefined | null): string {
 
 /** Markdown for the hover over a span. `quizCommand` is a command: URI, or empty to leave it out. */
 export function hoverMarkdown(span: Span, commits: Record<string, CommitInfo>, quizCommand = ""): string {
-  const parts = [`**grokmap · ${LABELS[span.state]}**`, "", EXPLAIN[span.state]];
+  const parts = [`**Grok-map · ${LABELS[span.state]}**`, "", EXPLAIN[span.state]];
   const c = span.sha ? commits[span.sha] : undefined;
   if (c) {
     const who = span.agent ? `${agentName(span.agent)} (committed by ${c.author})` : c.author;
@@ -140,12 +140,12 @@ export function escapeMd(text: string): string {
 export function statusText(data: FileData): string | undefined {
   const s = data.summary;
   if (!data.tracked || !s || s.ai === 0) return undefined;
-  return `grokmap ${s.debt_pct}%`;
+  return `Grok-map ${s.debt_pct}%`;
 }
 
 export function statusTooltip(data: FileData): string {
   const s = data.summary;
-  if (!s) return "grokmap";
+  if (!s) return "Grok-map";
   const lines = [
     `Comprehension debt ${s.debt_pct}% in this file${data.critical ? " (critical path)" : ""}`,
     `${s.ai} of ${s.lines} lines written by AI: ${s.unread} unread, ${s.skimmed} skimmed, ${s.fading} fading, ${s.understood} understood`,

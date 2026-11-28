@@ -1,16 +1,16 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.Aadithya-kl/grokmap",
-  "title": "grokmap",
+  "title": "Grok-map",
   "description": "Shows coding agents which AI-written code nobody on the team understands, and quizzes you on it.",
   "websiteUrl": "https://aadithya-kl.github.io/grokmap/",
   "repository": { "url": "https://github.com/Aadithya-kl/grokmap", "source": "github" },
-  "version": "0.6.1",
+  "version": "0.6.2",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "grokmap-mcp",
-      "version": "0.6.1",
+      "version": "0.6.2",
       "runtimeHint": "uvx",
       "transport": { "type": "stdio" }
     }

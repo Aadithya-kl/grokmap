@@ -1,42 +1,106 @@
 {
   "name": "grokmap",
-  "displayName": "grokmap: who understands this code?",
+  "displayName": "Grok-map: who understands this code?",
   "description": "Colours AI-written code in the gutter by whether anyone on your team has shown they understand it. Hover for who wrote it and who knows it; one click for a quiz.",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "publisher": "aadithya-kl",
   "license": "MIT",
   "icon": "media/icon.png",
   "homepage": "https://aadithya-kl.github.io/grokmap/",
-  "repository": { "type": "git", "url": "https://github.com/Aadithya-kl/grokmap", "directory": "editors/vscode" },
-  "bugs": { "url": "https://github.com/Aadithya-kl/grokmap/issues" },
-  "galleryBanner": { "color": "#0d1117", "theme": "dark" },
-  "engines": { "vscode": "^1.90.0" },
-  "categories": ["Visualization", "Other"],
-  "keywords": ["ai", "copilot", "claude", "cursor", "code review", "comprehension debt", "git blame", "mcp"],
-  "activationEvents": ["onStartupFinished"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Aadithya-kl/grokmap",
+    "directory": "editors/vscode"
+  },
+  "bugs": {
+    "url": "https://github.com/Aadithya-kl/grokmap/issues"
+  },
+  "galleryBanner": {
+    "color": "#0d1117",
+    "theme": "dark"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Visualization",
+    "Other"
+  ],
+  "keywords": [
+    "ai",
+    "copilot",
+    "claude",
+    "cursor",
+    "code review",
+    "comprehension debt",
+    "git blame",
+    "mcp"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./out/src/extension.js",
   "contributes": {
     "commands": [
-      { "command": "grokmap.toggle", "title": "Toggle gutter colours", "category": "grokmap" },
-      { "command": "grokmap.refresh", "title": "Refresh", "category": "grokmap" },
-      { "command": "grokmap.quiz", "title": "Quiz me on this file", "category": "grokmap" },
-      { "command": "grokmap.who", "title": "Who understands this file?", "category": "grokmap" }
+      {
+        "command": "grokmap.toggle",
+        "title": "Toggle gutter colours",
+        "category": "Grok-map"
+      },
+      {
+        "command": "grokmap.refresh",
+        "title": "Refresh",
+        "category": "Grok-map"
+      },
+      {
+        "command": "grokmap.quiz",
+        "title": "Quiz me on this file",
+        "category": "Grok-map"
+      },
+      {
+        "command": "grokmap.who",
+        "title": "Who understands this file?",
+        "category": "Grok-map"
+      }
     ],
     "menus": {
-      "editor/title/context": [{ "command": "grokmap.quiz", "group": "grokmap" }],
-      "explorer/context": [{ "command": "grokmap.quiz", "when": "!explorerResourceIsFolder", "group": "grokmap" }]
+      "editor/title/context": [
+        {
+          "command": "grokmap.quiz",
+          "group": "grokmap"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "grokmap.quiz",
+          "when": "!explorerResourceIsFolder",
+          "group": "grokmap"
+        }
+      ]
     },
     "configuration": {
-      "title": "grokmap",
+      "title": "Grok-map",
       "properties": {
-        "grokmap.enabled": { "type": "boolean", "default": true, "description": "Show grokmap colours in the gutter." },
+        "grokmap.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show Grok-map colours in the gutter."
+        },
         "grokmap.command": {
           "type": "string",
           "default": "grokmap",
-          "markdownDescription": "Command that runs grokmap. Use `uvx grokmap` if you don't want to install it, or a full path such as `/home/me/.local/bin/grokmap`."
+          "markdownDescription": "Command that runs Grok-map. Use `uvx grokmap` if you don't want to install it, or a full path such as `/home/me/.local/bin/grokmap`."
         },
-        "grokmap.tintLines": { "type": "boolean", "default": false, "description": "Also tint the background of AI-written lines, not just the gutter." },
-        "grokmap.statusBar": { "type": "boolean", "default": true, "description": "Show the file's comprehension debt in the status bar." }
+        "grokmap.tintLines": {
+          "type": "boolean",
+          "default": false,
+          "description": "Also tint the background of AI-written lines, not just the gutter."
+        },
+        "grokmap.statusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the file's comprehension debt in the status bar."
+        }
       }
     }
   },

@@ -75,7 +75,7 @@ def cmd_status(args) -> int:
     if scan.head is None:
         print("grokmap: this repository has no commits yet.")
         return 0
-    print(f"{_c('grokmap', '1')} · {root.name} @ {scan.head[:10]}")
+    print(f"{_c('Grok-map', '1')} · {root.name} @ {scan.head[:10]}")
     print()
     print(f"  Comprehension debt   {_debt_label(t.debt_pct, t.ai)}")
     print(f"  Lines scanned        {t.lines:,} in {len(res.files):,} files")
@@ -110,7 +110,7 @@ def cmd_status(args) -> int:
 
 def _markdown_summary(name, head, res, top: int) -> str:
     t = res.total
-    lines = [f"### grokmap · {name} @ `{(head or '')[:10]}`", ""]
+    lines = [f"### Grok-map · {name} @ `{(head or '')[:10]}`", ""]
     if not t.ai:
         lines.append("No AI-written code detected. Comprehension debt: **0%**.")
         return "\n".join(lines)
