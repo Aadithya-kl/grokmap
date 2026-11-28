@@ -16,7 +16,7 @@
 ![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 ![license](https://img.shields.io/badge/license-MIT-lightgrey)
 
-**[▶ Live demo](https://aadithya-kl.github.io/grokmap/demo/)** · [Website](https://aadithya-kl.github.io/grokmap/) · [Study: how much of open source is AI-written?](https://aadithya-kl.github.io/grokmap/study/) · [Install](#install) · [Agent skill](#add-the-skill-to-your-coding-agent) · [MCP server](#mcp-server) · [VS Code](#vs-code-extension) · [CI and PR comments](#in-ci)
+**[▶ Live demo](https://aadithya-kl.github.io/grokmap/demo/)** · [Website](https://aadithya-kl.github.io/grokmap/) · [Study: how much of open source is AI-written?](https://aadithya-kl.github.io/grokmap/study/) · [Install](#install) · [Agent skill](#add-the-skill-to-your-coding-agent) · [MCP server](#mcp-server) · [VS Code](#vs-code-extension-a-dashboard-quizzes-and-the-gutter) · [CI and PR comments](#in-ci)
 
 <img src="docs/demo.gif" alt="A coding agent calls Grok-map before editing a payments module, sees risk: very high because 35 AI-written lines were never checked, keeps the change small, quizzes the developer and records the result; in the editor the gutter turns from red to green" width="900">
 
@@ -160,9 +160,17 @@ Prefer Docker? `docker build -t grokmap-mcp .` in this repo, then use `docker ru
 Plus a `quiz_me` prompt. Every tool returns structured results with a published output schema, so agents read fields instead of parsing text. Everything runs locally on your git history: no network calls, no API keys. Find it in the [official MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.Aadithya-kl/grokmap) (`io.github.Aadithya-kl/grokmap`), on [Glama](https://glama.ai/mcp/servers/Aadithya-kl/grokmap) and on [cursor.directory](https://cursor.directory/plugins/grokmap).
 
 <a id="vs-code-extension"></a>
-### VS Code extension: see it in the gutter
+### VS Code extension: a dashboard, quizzes and the gutter
 
-The [Grok-map extension](editors/vscode) colours every AI-written line in the editor margin: **red** where nobody has checked it, **orange** where it was only skimmed, **yellow** where understanding is fading, **green** where someone has shown they understand it. Hover a block to see which agent wrote it, in which commit, and who understands it. The status bar shows the file's debt, and **Grok-map: Quiz me on this file** hands your agent a quiz brief. It follows your edits as you type, and works in VS Code, Cursor, Windsurf and VSCodium.
+The [Grok-map extension](editors/vscode) adds a **Grok-map panel** to the sidebar, which can also open as an editor tab:
+- **Repositories:** pick any repository without opening it as a folder.
+- **Dashboard:** how much of the AI-written code anyone understands, and the files that need attention.
+- **Quizzes:** take one right there. Questions are written and graded by the AI model you already have in VS Code (such as Copilot), and the result goes straight into the ledger.
+- **Hand-off:** with no model, one click passes the quiz to Claude Code, Copilot Chat, Kilo Code, Cline, Roo Code or Cursor.
+
+![The Grok-map panel in VS Code](docs/vscode-panel.png)
+
+In the editor margin, every AI-written line is coloured: **red** where nobody has checked it, **orange** where it was only skimmed, **yellow** where understanding is fading, **green** where someone has shown they understand it. Hover a block to see which agent wrote it, in which commit, and who understands it. The status bar shows the file's debt. It follows your edits as you type, and works in VS Code, Cursor, Windsurf and VSCodium.
 
 [![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/aadithya-kl.grokmap?label=VS%20Code%20Marketplace&logo=visualstudiocode&color=0098FF)](https://marketplace.visualstudio.com/items?itemName=aadithya-kl.grokmap)
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/aadithya-kl.grokmap?label=installs&color=0098FF)](https://marketplace.visualstudio.com/items?itemName=aadithya-kl.grokmap)

@@ -1,8 +1,23 @@
 # Grok-map for VS Code
 
-**See which AI-written code nobody on your team understands, right in the gutter.**
+**See which AI-written code nobody on your team understands, and fix it with a 2-minute quiz.**
 
-Grok-map traces every line to the commit that wrote it, recognises commits made by AI coding agents (Claude Code, Copilot, Cursor, Codex, Aider, Devin, Gemini…), and checks them against a ledger, kept in git, of who has *shown* they understand that code. This extension paints the result next to your code:
+![The Grok-map panel: a dashboard, a quiz question and a graded result](https://raw.githubusercontent.com/Aadithya-kl/grokmap/main/docs/vscode-panel.png)
+
+Grok-map traces every line to the commit that wrote it, recognises commits made by AI coding agents (Claude Code, Copilot, Cursor, Codex, Aider, Devin, Gemini…), and checks them against a ledger, kept in git, of who has *shown* they understand that code.
+
+## The Grok-map panel
+
+Click the **Grok-map** icon in the activity bar. Or open it as an editor tab with the ↗ button.
+
+- **Pick any repository.** No need to open it as a folder first. Recent ones are one click away.
+- **See where you stand.** Shows how much of the AI-written code anyone understands and which files need attention. Click a file to open it, or quiz yourself on it. It also shows who understands what and which agents wrote the code.
+- **Get quizzed right there.** One question at a time, then a score with feedback and a good answer for each. The result is saved to the ledger for exactly the lines you were quizzed on, and the gutter updates.
+  - Questions are written and graded by the AI model you already have in VS Code, such as GitHub Copilot.
+  - No API keys.
+- **No model in VS Code?** One click hands the quiz to Claude Code, Copilot Chat, Kilo Code, Cline, Roo Code or Cursor's chat. Your assistant asks the questions and records the score through Grok-map's MCP server.
+
+## In the gutter
 
 | Gutter | Meaning |
 |---|---|
@@ -12,11 +27,10 @@ Grok-map traces every line to the commit that wrote it, recognises commits made 
 | 🟩 green | Someone passed a quiz, explained it or paired on it |
 | none | Written by a person, or not committed yet |
 
-- **Hover** a coloured block to see which agent wrote it, in which commit, and who understands it.
-- **Status bar** shows the file's comprehension debt. Click it for who understands what.
-- **Quiz me on this file** (command palette, or the link in the hover) copies a short quiz brief for your coding agent. Paste it into Copilot Chat, Claude Code or Cursor: the agent asks you 2 to 6 questions and records the result, and the gutter turns green.
+- **Hover** a coloured block to see which agent wrote it, in which commit, and who understands it. **Quiz me on this** opens the quiz in the panel.
+- **The status bar** shows the file's comprehension debt. Click it to see who understands what.
 
-It follows your edits as you type, and updates when anyone records a quiz (the ledger is just a file in the repo).
+The gutter follows your edits as you type. It also updates when anyone records a quiz, because the ledger is just a file in the repo.
 
 ## Install
 
@@ -30,7 +44,13 @@ The `grokmap` command-line tool, version 0.5 or later:
 pip install grokmap        # or: pipx install grokmap
 ```
 
-No install? Set **grokmap.command** to `uvx grokmap`. Everything runs locally on your git history: no network calls, no account, no API keys.
+No install? The panel offers **Use uvx instead**, or set **grokmap.command** to `uvx grokmap`.
+
+## Privacy
+
+Grok-map reads your git history locally. It makes no network calls, and needs no account and no API keys.
+
+The one exception is a quiz taken in the panel. It sends the lines being quizzed, and your answers, to the AI model you picked in VS Code, through VS Code's own language model API. VS Code asks your permission the first time. If you hand the quiz to an assistant instead, it goes wherever that assistant sends it.
 
 ## Settings
 

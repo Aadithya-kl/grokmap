@@ -1,8 +1,8 @@
 {
   "name": "grokmap",
   "displayName": "Grok-map: who understands this code?",
-  "description": "Colours AI-written code in the gutter by whether anyone on your team has shown they understand it. Hover for who wrote it and who knows it; one click for a quiz.",
-  "version": "0.6.2",
+  "description": "See which AI-written code nobody on your team understands, and fix it with a 2-minute quiz. A dashboard in the sidebar, colours in the gutter, quizzes run by VS Code's AI or your own assistant.",
+  "version": "0.7.0",
   "publisher": "aadithya-kl",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -28,13 +28,17 @@
   ],
   "keywords": [
     "ai",
-    "copilot",
     "claude",
-    "cursor",
+    "claude code",
     "code review",
     "comprehension debt",
+    "copilot",
+    "cursor",
+    "dashboard",
     "git blame",
-    "mcp"
+    "kilo code",
+    "mcp",
+    "quiz"
   ],
   "activationEvents": [
     "onStartupFinished"
@@ -43,23 +47,53 @@
   "contributes": {
     "commands": [
       {
+        "command": "grokmap.openPanel",
+        "title": "Open panel",
+        "category": "Grok-map",
+        "icon": "media/activity.svg"
+      },
+      {
+        "command": "grokmap.openPanelInEditor",
+        "title": "Open in editor tab",
+        "category": "Grok-map",
+        "icon": "$(link-external)"
+      },
+      {
+        "command": "grokmap.chooseRepo",
+        "title": "Choose repository\u2026",
+        "category": "Grok-map",
+        "icon": "$(repo)"
+      },
+      {
+        "command": "grokmap.refreshPanel",
+        "title": "Refresh panel",
+        "category": "Grok-map",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "grokmap.quiz",
+        "title": "Quiz me on this file",
+        "category": "Grok-map",
+        "icon": "$(mortar-board)"
+      },
+      {
+        "command": "grokmap.quizBrief",
+        "title": "Copy a quiz brief for my AI assistant",
+        "category": "Grok-map"
+      },
+      {
+        "command": "grokmap.who",
+        "title": "Who understands this file?",
+        "category": "Grok-map"
+      },
+      {
         "command": "grokmap.toggle",
         "title": "Toggle gutter colours",
         "category": "Grok-map"
       },
       {
         "command": "grokmap.refresh",
-        "title": "Refresh",
-        "category": "Grok-map"
-      },
-      {
-        "command": "grokmap.quiz",
-        "title": "Quiz me on this file",
-        "category": "Grok-map"
-      },
-      {
-        "command": "grokmap.who",
-        "title": "Who understands this file?",
+        "title": "Refresh gutter",
         "category": "Grok-map"
       }
     ],
@@ -75,6 +109,23 @@
           "command": "grokmap.quiz",
           "when": "!explorerResourceIsFolder",
           "group": "grokmap"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "grokmap.refreshPanel",
+          "when": "view == grokmap.panel",
+          "group": "navigation@1"
+        },
+        {
+          "command": "grokmap.chooseRepo",
+          "when": "view == grokmap.panel",
+          "group": "navigation@2"
+        },
+        {
+          "command": "grokmap.openPanelInEditor",
+          "when": "view == grokmap.panel",
+          "group": "navigation@3"
         }
       ]
     },
@@ -102,11 +153,31 @@
           "description": "Show the file's comprehension debt in the status bar."
         }
       }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "grokmap",
+          "title": "Grok-map",
+          "icon": "media/activity.svg"
+        }
+      ]
+    },
+    "views": {
+      "grokmap": [
+        {
+          "type": "webview",
+          "id": "grokmap.panel",
+          "name": "Overview",
+          "icon": "media/activity.svg",
+          "contextualTitle": "Grok-map"
+        }
+      ]
     }
   },
   "scripts": {
     "compile": "tsc -p .",
-    "test": "npm run compile && node --test out/test/model.test.js out/test/extension.test.js",
+    "test": "npm run compile && node --test out/test/model.test.js out/test/panelModel.test.js out/test/extension.test.js out/test/panel.test.js",
     "package": "npm run compile && vsce package --no-dependencies -o grokmap.vsix"
   },
   "devDependencies": {

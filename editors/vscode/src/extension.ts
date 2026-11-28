@@ -1,6 +1,7 @@
-import { execFile } from "node:child_process";
 import * as path from "node:path";
 import * as vscode from "vscode";
+import { config, run } from "./cli";
+import { GrokmapPanel } from "./panel";
 import {
   DECORATED,
   FileData,
@@ -27,6 +28,7 @@ const cache = new Map<string, FileData>(); // uri -> last result
 const timers = new Map<string, NodeJS.Timeout>();
 let enabled = true;
 let warnedMissing = false;
+let panel: GrokmapPanel | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
   output = vscode.window.createOutputChannel("Grok-map");
@@ -44,10 +46,14 @@ export function activate(context: vscode.ExtensionContext): void {
       refreshVisible();
     }),
     vscode.commands.registerCommand("grokmap.refresh", () => refreshVisible(true)),
-    vscode.commands.registerCommand("grokmap.quiz", (uri?: vscode.Uri) => quiz(uri)),
+    vscode.commands.registerCommand("grokmap.quiz", (uri?: vscode.Uri | string) => quiz(uri)),
+    vscode.commands.registerCommand("grokmap.quizBrief", (uri?: vscode.Uri | string) => quizBrief(uri)),
     vscode.commands.registerCommand("grokmap.who", () => who()),
     vscode.window.onDidChangeVisibleTextEditors(() => refreshVisible()),
-    vscode.window.onDidChangeActiveTextEditor(() => updateStatus()),
+    vscode.window.onDidChangeActiveTextEditor(() => {
+      updateStatus();
+      void panel?.followEditor();
+    }),
     vscode.workspace.onDidSaveTextDocument((doc) => schedule(doc, 0)),
     vscode.workspace.onDidChangeTextDocument((e) => {
       if (e.contentChanges.length) schedule(e.document, 800);
@@ -68,16 +74,36 @@ export function activate(context: vscode.ExtensionContext): void {
     watcher.onDidChange(() => refreshVisible(true)),
     watcher.onDidCreate(() => refreshVisible(true)),
   );
+  if (vscode.window.registerWebviewViewProvider) {
+    panel = new GrokmapPanel(context, fileData);
+    context.subscriptions.push(
+      vscode.window.registerWebviewViewProvider(GrokmapPanel.viewId, panel, { webviewOptions: { retainContextWhenHidden: true } }),
+      vscode.commands.registerCommand("grokmap.openPanel", () => vscode.commands.executeCommand(`${GrokmapPanel.viewId}.focus`)),
+      vscode.commands.registerCommand("grokmap.openPanelInEditor", () => panel?.openInEditor()),
+      vscode.commands.registerCommand("grokmap.chooseRepo", () => panel?.chooseRepo()),
+      vscode.commands.registerCommand("grokmap.refreshPanel", () => panel?.load()),
+      vscode.workspace.onDidChangeWorkspaceFolders(() => void panel?.load()),
+      watcher.onDidChange(() => void panel?.load()),
+    );
+  }
   refreshVisible();
+}
+
+/** Per-line data for a file: from the gutter's cache, or fresh from the CLI. */
+async function fileData(uri: vscode.Uri): Promise<FileData | undefined> {
+  const hit = cache.get(uri.toString());
+  if (hit) return hit;
+  try {
+    const out = await run(["lines", uri.fsPath, "--json"], path.dirname(uri.fsPath));
+    return JSON.parse(out) as FileData;
+  } catch {
+    return undefined;
+  }
 }
 
 export function deactivate(): void {
   for (const t of timers.values()) clearTimeout(t);
   for (const d of decorationTypes.values()) d.dispose();
-}
-
-function config(): vscode.WorkspaceConfiguration {
-  return vscode.workspace.getConfiguration("grokmap");
 }
 
 function buildDecorationTypes(context: vscode.ExtensionContext): void {
@@ -120,25 +146,6 @@ function refreshVisible(force = false): void {
     else schedule(editor.document, 0);
   }
   updateStatus();
-}
-
-function run(args: string[], cwd: string, stdin?: string): Promise<string> {
-  const command = config().get<string>("command", "grokmap").trim() || "grokmap";
-  const [exe, ...pre] = command.split(/\s+/);
-  return new Promise((resolve, reject) => {
-    const child = execFile(
-      exe,
-      [...pre, ...args],
-      { cwd, maxBuffer: 32 * 1024 * 1024, timeout: 60_000, windowsHide: true },
-      (err, stdout, stderr) => {
-        if (err) {
-          (err as Error & { stderr?: string }).stderr = stderr;
-          reject(err);
-        } else resolve(stdout);
-      },
-    );
-    if (stdin !== undefined) child.stdin?.end(stdin);
-  });
 }
 
 async function analyze(doc: vscode.TextDocument): Promise<void> {
@@ -214,7 +221,19 @@ function updateStatus(): void {
   status.show();
 }
 
+/** Quiz me on a file: in the Grok-map panel when it's available, otherwise as a brief to paste. */
 async function quiz(arg?: vscode.Uri | string): Promise<void> {
+  const uri = typeof arg === "string" ? vscode.Uri.parse(arg) : arg ?? vscode.window.activeTextEditor?.document.uri;
+  if (!panel || !uri || uri.scheme !== "file") return quizBrief(arg);
+  const doc = vscode.workspace.textDocuments.find((d) => d.uri.toString() === uri.toString());
+  if (doc?.isDirty) await doc.save();
+  const info = await fileData(uri);
+  if (!info?.tracked) return quizBrief(arg);
+  await vscode.commands.executeCommand("grokmap.openPanel");
+  await panel.quizFile(uri, info.path);
+}
+
+async function quizBrief(arg?: vscode.Uri | string): Promise<void> {
   const uri = typeof arg === "string" ? vscode.Uri.parse(arg) : arg ?? vscode.window.activeTextEditor?.document.uri;
   if (!uri || uri.scheme !== "file") {
     void vscode.window.showInformationMessage("Open a file in a git repository to get a Grok-map quiz.");
@@ -257,7 +276,9 @@ async function who(): Promise<void> {
     ...DECORATED.map((st) => ({ label: LABELS[st], description: `${s[st as keyof typeof s]} lines` })),
     ...Object.entries(s.people).map(([p, n]) => ({ label: `$(person) ${p}`, description: `understands ${n} lines` })),
     { label: "$(mortar-board) Quiz me on this file", description: "grokmap.quiz" },
+    { label: "$(layout-sidebar-left) Open the Grok-map panel", description: "grokmap.openPanel" },
   ];
   const pick = await vscode.window.showQuickPick(items, { title: `Grok-map · ${data.path}` });
   if (pick?.description === "grokmap.quiz") void quiz(editor.document.uri);
+  else if (pick?.description === "grokmap.openPanel") void vscode.commands.executeCommand("grokmap.openPanel");
 }

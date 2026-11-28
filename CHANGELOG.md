@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 0.7.0
+
+- **A Grok-map panel in VS Code.** Click the Grok-map icon in the sidebar (or open it as an editor tab, like a chat):
+  - **No folder to open first.** Pick any git repository from the panel; it remembers your recent ones.
+  - **Dashboard:** how much of the AI-written code anyone understands, the files that need attention (click to open, one click to quiz), who understands what, and which agents wrote it. It follows the file you have open.
+  - **Quizzes right in the panel.** One question at a time, then a score, per-question feedback and a good answer for each. The result is saved to the ledger for exactly the quizzed lines, and the gutter updates. Questions are written and graded by the AI model you already have in VS Code (for example GitHub Copilot), with no API keys. A score of 0 isn't recorded, so failed code stays unchecked rather than counting as skimmed.
+  - **No model? One-click hand-off** to Claude Code, Copilot Chat, Kilo Code, Cline, Roo Code or Cursor's chat: the quiz is copied (or filled in) and the assistant records your score through the MCP server.
+  - Follows your light or dark theme, keyboard friendly, respects reduced motion.
+- "Quiz me" in hovers and menus now opens the panel quiz. The old copy-a-brief command is still there as **Grok-map: Copy a quiz brief for my AI assistant**.
+
 ## 0.6.2
 
 - **The project is now called Grok-map** everywhere people read the name: README, website, VS Code extension, MCP server title, HTML report and PR comments. Install names and commands don't change: `pip install grokmap`, `uvx grokmap-mcp`, the `grokmap` command and the `aadithya-kl.grokmap` extension ID all stay the same, so nothing breaks.
