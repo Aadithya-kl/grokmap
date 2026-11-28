@@ -30,7 +30,8 @@ def is_meaningful(norm: str) -> bool:
 
 
 def line_hash(norm: str) -> str:
-    return hashlib.sha1(norm.encode("utf-8", "replace")).hexdigest()[:8]
+    # a short fingerprint to match lines across edits, not a security measure
+    return hashlib.sha1(norm.encode("utf-8", "replace"), usedforsecurity=False).hexdigest()[:8]
 
 
 @dataclass
@@ -120,7 +121,7 @@ def _save_cache(root: Path, data: dict) -> None:
 
 
 def text_files_at_head(root: Path) -> set[str]:
-    out = gitutil.run_git(["grep", "-I", "-l", "-z", "-e", "", "HEAD", "--"], root, check=False)
+    out = gitutil.run_git(["grep", "--no-textconv", "-I", "-l", "-z", "-e", "", "HEAD", "--"], root, check=False)
     files = set()
     for item in out.split("\0"):
         if item.startswith("HEAD:"):

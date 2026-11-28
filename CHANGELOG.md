@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 0.7.1
+
+Security fixes from a full checkup. Upgrading is recommended, especially if you use the MCP server.
+
+- **Revisions are validated before git sees them.** A base branch from `--base`, `--diff` or the MCP tool `pr_comprehension` is resolved to a commit hash, and one starting with `-` is refused. Before, a value like `--output=FILE` reached `git diff` as an option and overwrote that file, which a prompt-injected agent could trigger through the MCP server.
+- **Git no longer runs programs named in a repository's config.** Every git call turns off the fsmonitor hook and external diff and textconv tools. Before, a repository with a planted `.git/config` could get code execution when Grok-map ran `git diff`.
+- **Symlinks are never followed.** Quizzes and `grokmap mark` read only regular files inside the repository, so a branch can't add a symlink that leaks `~/.ssh` or `~/.aws` into a quiz brief sent to an agent.
+- **PR comments can't be hijacked by file names.** File and agent names are put in code spans nothing can close, so a crafted file name can't inject links, markdown or @mentions into the bot's comment.
+- **The HTML report** encodes `<`, `>` and `&` in its embedded data (it already blocked `</script>`).
+- **VS Code extension:**
+  - `grokmap.command` can only be set in user settings, never by a repository's `.vscode/settings.json`.
+  - The extension declares that it only runs in trusted workspaces.
+  - Commit authors in hovers are escaped.
+  - The panel only opens `https://` links, and its script nonce is cryptographically random.
+- **GitHub Action:** inputs reach shell steps through environment variables, and the Action only updates a previous comment written by a bot.
+- SECURITY.md now describes the hardening and the trust model.
+
 ## 0.7.0
 
 - **A Grok-map panel in VS Code.** Click the Grok-map icon in the sidebar (or open it as an editor tab, like a chat):

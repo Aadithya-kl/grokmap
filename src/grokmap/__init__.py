@@ -1,3 +1,3 @@
 """grokmap: measure comprehension debt — the AI-written code nobody on the team understands."""
 
-__version__ = "0.7.0"
+__version__ = "0.7.1"

@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as vscode from "vscode";
@@ -191,7 +192,7 @@ export class GrokmapPanel implements vscode.WebviewViewProvider {
 
   private html(webview: vscode.Webview): string {
     const media = (f: string) => webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, "media", f)).toString();
-    const nonce = Array.from({ length: 24 }, () => Math.floor(Math.random() * 36).toString(36)).join("");
+    const nonce = randomBytes(18).toString("base64url");
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -533,9 +534,12 @@ export class GrokmapPanel implements vscode.WebviewViewProvider {
       case "openInEditor":
         this.openInEditor();
         break;
-      case "link":
-        await vscode.env.openExternal(vscode.Uri.parse(String(m.url)));
+      case "link": {
+        // only web pages: the panel never needs to open anything else
+        const url = String(m.url ?? "");
+        if (/^https:\/\/[^\s]+$/i.test(url)) await vscode.env.openExternal(vscode.Uri.parse(url));
         break;
+      }
     }
   }
 

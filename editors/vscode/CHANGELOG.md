@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.1
+
+- Security: `grokmap.command` can only be set in user settings, never by a repository's `.vscode/settings.json`, and the extension runs only in trusted workspaces. Commit authors in hovers are escaped; the panel opens only `https://` links.
+- Needs grokmap 0.7.1 for the command-line fixes (validated revisions, no repo-configured git programs, no symlinks followed).
+
 ## 0.7.0
 
 - **Grok-map panel**: click the Grok-map icon in the activity bar (or open it in an editor tab). Pick any git repository without opening it as a folder, see how much AI-written code anyone understands, which files need attention and who understands what.

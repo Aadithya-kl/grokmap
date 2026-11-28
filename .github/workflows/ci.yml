@@ -35,7 +35,9 @@ jobs:
           fetch-depth: 0
       - uses: ./
         id: grokmap
-      - run: echo "comprehension debt is ${{ steps.grokmap.outputs.debt }}%"
+      - run: echo "comprehension debt is ${DEBT}%"
+        env:
+          DEBT: ${{ steps.grokmap.outputs.debt }}
 
   docker:
     # the image directories such as Glama build to inspect the MCP server

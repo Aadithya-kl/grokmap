@@ -35,7 +35,7 @@ def file_lines(root: Path, cfg: Config, path: str, contents: str | None = None) 
     rel = relative_path(root, path)
     if not cfg.is_included(rel):
         return {"path": rel, "tracked": False, "note": "This file is excluded by .grokmap.toml.", "lines": []}
-    args = ["blame", "--line-porcelain", "-w"]
+    args = ["blame", "--no-textconv", "--line-porcelain", "-w"]
     if contents is not None:
         args += ["--contents", "-"]
     try:

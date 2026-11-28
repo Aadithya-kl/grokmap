@@ -82,9 +82,25 @@ def format_ranges(rs: list[tuple[int, int]]) -> str:
     return ",".join(f"{a}-{b}" if a != b else str(a) for a, b in rs)
 
 
-def read_lines(root: Path, path: str) -> list[str]:
+def inside_repo(root: Path, path: str) -> Path | None:
+    """The file at a repository-relative path, or None if it is a symlink or resolves outside the repository."""
+    full = root / path
     try:
-        return (root / path).read_text(encoding="utf-8", errors="replace").splitlines()
+        if full.is_symlink() or not full.resolve().is_relative_to(root.resolve()):
+            return None
+    except OSError:
+        return None
+    return full
+
+
+def read_lines(root: Path, path: str) -> list[str]:
+    # never follow a symlink: a branch could add one pointing at ~/.ssh or ~/.aws and the quiz
+    # would hand that file's content to the coding agent
+    full = inside_repo(root, path)
+    if full is None:
+        return []
+    try:
+        return full.read_text(encoding="utf-8", errors="replace").splitlines()
     except OSError:
         return []
 
@@ -302,6 +318,8 @@ def mark(
         if path.startswith("./"):
             path = path[2:]
         full = root / path
+        if inside_repo(root, path) is None:
+            raise FileNotFoundError(f"not a file inside the repository: {path}")
         if full.is_dir():
             for f in sorted(full.rglob("*")):
                 rel = f.relative_to(root).as_posix()

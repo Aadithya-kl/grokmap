@@ -47,7 +47,8 @@ def build_payload(scan: Scan, result: Result, repo_name: str, trend: dict | None
 def render_report(scan: Scan, result: Result, repo_name: str, trend: dict | None = None, note: str | None = None) -> str:
     template = resources.files("grokmap").joinpath("report_template.html").read_text(encoding="utf-8")
     data = json.dumps(build_payload(scan, result, repo_name, trend, note), separators=(",", ":"))
-    data = data.replace("</", "<\\/")
+    # inert inside <script>: no "</script>", "<!--" or entity can change how the page is parsed
+    data = data.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
     return template.replace("/*__GROKMAP_DATA__*/null", data).replace("__GROKMAP_TITLE__", _html_escape(repo_name))
 
 

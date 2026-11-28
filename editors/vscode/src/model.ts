@@ -120,8 +120,9 @@ export function hoverMarkdown(span: Span, commits: Record<string, CommitInfo>, q
   const parts = [`**Grok-map · ${LABELS[span.state]}**`, "", EXPLAIN[span.state]];
   const c = span.sha ? commits[span.sha] : undefined;
   if (c) {
-    const who = span.agent ? `${agentName(span.agent)} (committed by ${c.author})` : c.author;
-    parts.push("", `Written by ${who} on ${c.date} in \`${span.sha}\`: ${escapeMd(c.summary)}`);
+    const author = escapeMd(c.author);
+    const who = span.agent ? `${escapeMd(agentName(span.agent))} (committed by ${author})` : author;
+    parts.push("", `Written by ${who} on ${escapeMd(c.date)} in \`${escapeMd(span.sha ?? "")}\`: ${escapeMd(c.summary)}`);
   }
   if (span.understoodBy.length) {
     parts.push("", `Understood by ${span.understoodBy.map(escapeMd).join(", ")}`);

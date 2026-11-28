@@ -52,7 +52,9 @@ runs:
 
     - name: Install grokmap
       shell: bash
-      run: python -m pip install --quiet "${{ github.action_path }}"
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+      run: python -m pip install --quiet "$ACTION_PATH"
 
     - name: Check history depth
       shell: bash
@@ -106,7 +108,7 @@ runs:
       run: |
         marker='<!-- grokmap:pr-summary -->'
         id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
-              --jq ".[] | select((.body // \"\") | startswith(\"$marker\")) | .id" | head -n 1)
+              --jq ".[] | select(.user.type == \"Bot\" and ((.body // \"\") | startswith(\"$marker\"))) | .id" | head -n 1)
         if [ -n "$id" ]; then
           gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@"$RUNNER_TEMP/grokmap-pr.md" > /dev/null
         else
@@ -119,13 +121,17 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       env:
         BASE: ${{ github.base_ref }}
-      run: grokmap diff --base "origin/$BASE" --max-unread "${{ inputs.max-unread }}"
+        MAX_UNREAD: ${{ inputs.max-unread }}
+      run: grokmap diff --base "origin/$BASE" --max-unread "$MAX_UNREAD"
 
     - name: Enforce limit
       if: inputs.max-debt != ''
       shell: bash
       working-directory: ${{ inputs.working-directory }}
+      env:
+        MAX_DEBT: ${{ inputs.max-debt }}
+        CRITICAL: ${{ inputs.critical }}
       run: |
-        args=(--max-debt "${{ inputs.max-debt }}")
-        if [ "${{ inputs.critical }}" = "true" ]; then args+=(--critical); fi
+        args=(--max-debt "$MAX_DEBT")
+        if [ "$CRITICAL" = "true" ]; then args+=(--critical); fi
         grokmap check "${args[@]}"

@@ -12,12 +12,18 @@ class GitError(RuntimeError):
     pass
 
 
-def run_git(args: list[str], cwd: Path, input_text: str | None = None, check: bool = True) -> str:
+# Grok-map only reads repositories. These keep git from running programs that a repository's own
+# config can name (an fsmonitor hook, an external diff tool), however git is invoked below.
+SAFE_CONFIG = ["-c", "core.fsmonitor=false", "-c", "diff.external="]
+
+
+def run_git(args: list[str], cwd: Path, input_text: str | None = None, check: bool = True, safe: bool = True) -> str:
     env = dict(os.environ)
     env.setdefault("LC_ALL", "C")
     env["GIT_OPTIONAL_LOCKS"] = "0"
+    env.pop("GIT_EXTERNAL_DIFF", None)
     proc = subprocess.run(
-        ["git", *args],
+        ["git", *(SAFE_CONFIG if safe else []), *args],
         cwd=str(cwd),
         input=input_text,
         capture_output=True,
@@ -29,6 +35,21 @@ def run_git(args: list[str], cwd: Path, input_text: str | None = None, check: bo
     if check and proc.returncode != 0:
         raise GitError(f"git {' '.join(args)} failed: {proc.stderr.strip()}")
     return proc.stdout
+
+
+def resolve_commit(root: Path, rev: str) -> str:
+    """The commit a user- or agent-supplied revision names, as a full sha.
+
+    Never pass such a revision to git directly: one that starts with "-" would be read as an
+    option (for example `--output=FILE`, which makes `git diff` overwrite FILE).
+    """
+    rev = (rev or "").strip()
+    if not rev or rev.startswith("-") or any(c in rev for c in "\0\n\r"):
+        raise GitError(f"not a valid revision: {rev!r}")
+    sha = run_git(["rev-parse", "--verify", "--quiet", "--end-of-options", f"{rev}^{{commit}}"], root, check=False).strip()
+    if not sha:
+        raise GitError(f"unknown revision: {rev}")
+    return sha
 
 
 def repo_root(start: Path) -> Path:
@@ -110,16 +131,16 @@ def commit_infos(root: Path, shas: list[str]) -> dict[str, CommitInfo]:
 
 
 def blame_porcelain(root: Path, path: str, rev: str = "HEAD") -> str:
-    return run_git(["blame", "--line-porcelain", "-w", rev, "--", path], root)
+    return run_git(["blame", "--no-textconv", "--line-porcelain", "-w", rev, "--", path], root)
 
 
 def diff_files(root: Path, base: str | None, staged: bool) -> list[str]:
     """Paths changed relative to base (or the working tree vs HEAD)."""
-    args = ["diff", "--name-only", "--diff-filter=AMR", "-z"]
+    args = ["diff", "--no-ext-diff", "--no-textconv", "--name-only", "--diff-filter=AMR", "-z"]
     if staged:
         args.append("--cached")
     if base:
-        args.append(base)
+        args.append(resolve_commit(root, base))
     out = run_git(args, root)
     paths = [p for p in out.split("\0") if p]
     if not staged and not base:
@@ -131,11 +152,11 @@ def diff_files(root: Path, base: str | None, staged: bool) -> list[str]:
 
 def diff_added_lines(root: Path, path: str, base: str | None, staged: bool) -> list[tuple[int, int]] | None:
     """Line ranges (1-based, inclusive) added in the working copy of path. None = whole file is new."""
-    args = ["diff", "-U0", "--no-color"]
+    args = ["diff", "--no-ext-diff", "--no-textconv", "-U0", "--no-color"]
     if staged:
         args.append("--cached")
     if base:
-        args.append(base)
+        args.append(resolve_commit(root, base))
     args += ["--", path]
     out = run_git(args, root, check=False)
     if not out.strip():

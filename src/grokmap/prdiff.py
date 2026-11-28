@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -58,10 +59,12 @@ class PrDelta:
 
 
 def compute(root: Path, cfg: Config, base: str) -> PrDelta:
-    merge_base = gitutil.run_git(["merge-base", base, "HEAD"], root).strip()
+    merge_base = gitutil.run_git(["merge-base", gitutil.resolve_commit(root, base), "HEAD"], root).strip()
     branch_commits = set(gitutil.run_git(["rev-list", f"{merge_base}..HEAD"], root).split())
     changed = set(
-        gitutil.run_git(["diff", "--name-only", "--diff-filter=AMR", "-z", f"{merge_base}..HEAD"], root).split("\0")
+        gitutil.run_git(
+            ["diff", "--no-ext-diff", "--no-textconv", "--name-only", "--diff-filter=AMR", "-z", f"{merge_base}..HEAD"], root
+        ).split("\0")
     ) - {""}
     changed = {p for p in changed if cfg.is_included(p)}
     scan = scan_repo(root, cfg, only=changed)
@@ -92,6 +95,19 @@ def _s(n: int) -> str:
     return "" if n == 1 else "s"
 
 
+def md_code(text: str) -> str:
+    """Text as an inline code span that nothing in it can break out of, safe inside a table cell.
+
+    File and tool names come from the pull request, so a crafted one could otherwise close the
+    code span or the table and inject markdown, links or @mentions into the bot's comment.
+    """
+    text = "".join(c if c.isprintable() else "?" for c in text).replace("|", "\\|")
+    longest = max((len(r) for r in re.findall(r"`+", text)), default=0)
+    fence = "`" * (longest + 1)
+    pad = " " if text.startswith("`") or text.endswith("`") else ""
+    return f"{fence}{pad}{text}{pad}{fence}"
+
+
 def render_markdown(d: PrDelta, top: int = 15) -> str:
     out = [MARKER, "### Grok-map: comprehension check", ""]
     if not d.files:
@@ -101,7 +117,7 @@ def render_markdown(d: PrDelta, top: int = 15) -> str:
         out.append(f"This change adds **{d.human:,}** line{_s(d.human)}, all written by people. No new comprehension debt.")
         return "\n".join(out)
     pct = 100 * d.understood / d.ai
-    tools = ", ".join(f"{k} {v:,}" for k, v in d.tools.most_common())
+    tools = ", ".join(f"{md_code(k)} {v:,}" for k, v in d.tools.most_common())
     out.append(
         f"This change adds **{d.ai:,} AI-written line{_s(d.ai)}** ({tools}) and {d.human:,} human-written line{_s(d.human)}. "
         f"**{d.understood:,} of the AI lines ({pct:.0f}%)** have been understood by someone on the team."
@@ -109,13 +125,13 @@ def render_markdown(d: PrDelta, top: int = 15) -> str:
     out += ["", "| File | AI lines | Understood | Not checked |", "|---|---:|---:|---:|"]
     ranked = sorted((f for f in d.files if f.ai), key=lambda f: (-f.unread, -f.ai))
     for f in ranked[:top]:
-        out.append(f"| `{f.path}` | {f.ai:,} | {f.understood:,} | {f.unread:,} |")
+        out.append(f"| {md_code(f.path)} | {f.ai:,} | {f.understood:,} | {f.unread:,} |")
     if len(ranked) > top:
         out.append(f"| _…and {len(ranked) - top} more files_ | | | |")
     out += [""]
     if d.unread:
         out.append(
-            f"Before merging, the author can ask their coding agent to run `grokmap quiz --diff {d.base}` "
+            f"Before merging, the author can ask their coding agent to run {md_code('grokmap quiz --diff ' + d.base)} "
             "for a 2-minute quiz on the unchecked lines."
         )
     else:

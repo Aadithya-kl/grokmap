@@ -76,5 +76,5 @@ def test_report_contains_trend_and_note(mixed_repo, capsys, tmp_path):
     out = tmp_path / "r.html"
     assert main(["-C", str(mixed_repo.root), "report", "-o", str(out), "--note", "hello <world>"]) == 0
     html = out.read_text()
-    assert '"trend":{"by":' in html and '"note":"hello <world>"' in html
+    assert '"trend":{"by":' in html and '"note":"hello \\u003cworld\\u003e"' in html
     assert main(["-C", str(mixed_repo.root), "trend", "--json"]) == 0

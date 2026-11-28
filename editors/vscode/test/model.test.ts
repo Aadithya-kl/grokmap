@@ -47,3 +47,10 @@ test("status bar only appears for files with AI-written code", () => {
   assert.equal(statusText({ ...base, summary: { ...summary, ai: 0 } }), undefined);
   assert.equal(statusText({ ...base, tracked: false }), undefined);
 });
+
+test("hover escapes the commit author, so a crafted name can't inject links", () => {
+  const [span] = toSpans([{ line: 1, state: "unread", sha: "abc1234567", agent: "claude", understood_by: [] }]);
+  const md = hoverMarkdown(span, { abc1234567: { author: "[click me](https://evil.example)", date: "2026-01-01", summary: "x", agent: "claude" } });
+  assert.ok(!md.includes("[click me](https://evil.example)"));
+  assert.ok(md.includes("\\[click me\\]"));
+});

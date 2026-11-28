@@ -2,7 +2,7 @@
   "name": "grokmap",
   "displayName": "Grok-map: who understands this code?",
   "description": "See which AI-written code nobody on your team understands, and fix it with a 2-minute quiz. A dashboard in the sidebar, colours in the gutter, quizzes run by VS Code's AI or your own assistant.",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "publisher": "aadithya-kl",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -161,7 +161,8 @@
         "grokmap.command": {
           "type": "string",
           "default": "grokmap",
-          "markdownDescription": "Command that runs Grok-map. Use `uvx grokmap` if you don't want to install it, or a full path such as `/home/me/.local/bin/grokmap`."
+          "markdownDescription": "Command that runs Grok-map. Use `uvx grokmap` if you don't want to install it, or a full path such as `/home/me/.local/bin/grokmap`. Set it in your user settings: for safety, a repository's own `.vscode/settings.json` can't change it.",
+          "scope": "machine"
         },
         "grokmap.tintLines": {
           "type": "boolean",
@@ -260,5 +261,12 @@
     "@types/vscode": "~1.90.0",
     "@vscode/vsce": "^4.1.1",
     "typescript": "~5.9.0"
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Grok-map runs git and the grokmap command in your repository, so it only runs in folders you trust."
+    },
+    "virtualWorkspaces": false
   }
 }

@@ -54,7 +54,7 @@ def _next(d: date, by: str) -> date:
 def collect(root: Path, cfg: Config, by: str = "auto", since: str | None = None) -> tuple[str, list[Bucket]]:
     """Lines added per period, split into human and per-agent. Merge commits are skipped."""
     fmt = "%x1e%H%x00%an%x00%ae%x00%ct%x00%B%x1f"
-    args = ["log", "--no-merges", "--numstat", "-M", f"--format={fmt}", "HEAD"]
+    args = ["log", "--no-ext-diff", "--no-textconv", "--no-merges", "--numstat", "-M", f"--format={fmt}", "HEAD"]
     if since:
         args.append(f"--since={since}")
     if gitutil.head_sha(root) is None:
