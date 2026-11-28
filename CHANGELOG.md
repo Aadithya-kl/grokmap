@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- The VS Code extension ships from its own workflow (`extension.yml`): it is attached to each release, published to the VS Code Marketplace with Trusted Publishing (no token), and to Open VSX, both with Trusted Publishing (no tokens).
+- The VS Code extension ships from its own workflow (`extension.yml`): it is attached to each release, published to the VS Code Marketplace with Trusted Publishing (no token), and to Open VSX (token for the first versions, then Trusted Publishing).
 
 ## 0.5.0
 

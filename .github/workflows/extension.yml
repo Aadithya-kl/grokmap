@@ -4,8 +4,8 @@ name: extension
 #   1. build the .vsix and attach it to the GitHub release
 #   2. publish to the VS Code Marketplace with Trusted Publishing (OIDC, no token);
 #      needs a Trusted Publishing policy on the "aadithya-kl" publisher for this workflow
-#   3. publish to Open VSX (Cursor, Windsurf, VSCodium) with Trusted Publishing (OIDC, no token);
-#      needs a trusted publisher on the "aadithya-kl" namespace for this workflow
+#   3. publish to Open VSX (Cursor, Windsurf, VSCodium): with the OVSX_PAT secret while it is
+#      set, otherwise with Trusted Publishing (OIDC) once this workflow is registered there
 # Runs on every v* tag; run it by hand (Actions → extension → Run workflow) to ship an existing tag.
 on:
   push:
@@ -51,6 +51,16 @@ jobs:
           gh release upload "$TAG" grokmap-*.vsix --clobber
       - name: Publish to the VS Code Marketplace (Trusted Publishing)
         run: npx --yes @vscode/vsce@4.1.1 publish --oidc --packagePath grokmap-*.vsix --skip-duplicate
-      - name: Publish to Open VSX (Trusted Publishing)
+      - name: Publish to Open VSX
         if: always()
-        run: npx --yes ovsx@1.4.0 publish grokmap-*.vsix --trusted-publishing --skip-duplicate
+        env:
+          # Open VSX only allows Trusted Publishing once the namespace is claimed and a first
+          # version exists, so the first publishes use the OVSX_PAT secret. Delete the secret
+          # after registering this workflow as the namespace's trusted publisher.
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          if [ -n "$OVSX_PAT" ]; then
+            npx --yes ovsx@1.4.0 publish grokmap-*.vsix --skip-duplicate
+          else
+            npx --yes ovsx@1.4.0 publish grokmap-*.vsix --trusted-publishing --skip-duplicate
+          fi
