@@ -122,6 +122,7 @@ export class GrokmapPanel implements vscode.WebviewViewProvider {
   private targets: QuizTarget[] = [];
   private cancel?: vscode.CancellationTokenSource;
   private loading?: Promise<void>;
+  private closed = false; // the person closed the repository: don't fall back to the open folder
 
   constructor(
     private readonly context: vscode.ExtensionContext,
@@ -232,11 +233,47 @@ export class GrokmapPanel implements vscode.WebviewViewProvider {
 
   async useRepo(folder: string): Promise<void> {
     const recent = [folder, ...this.context.globalState.get<string[]>(RECENT_KEY, []).filter((p) => p !== folder)].slice(0, 6);
+    this.closed = false;
     await this.context.globalState.update(REPO_KEY, folder);
     await this.context.globalState.update(RECENT_KEY, recent);
     this.state.quiz = undefined;
     this.state.repo = { path: folder, name: path.basename(folder) };
     await this.load();
+  }
+
+  /** The repository chip: recent repositories, another folder, or close. */
+  async switchRepo(): Promise<void> {
+    type Item = vscode.QuickPickItem & { act: "use" | "choose" | "close"; path?: string };
+    const current = this.state.repo?.path;
+    const items: Item[] = [
+      ...this.workspaceRepos().map((r) => ({ ...r, kind: "ws" })),
+      ...this.recent().map((r) => ({ ...r, kind: "recent" })),
+    ]
+      .filter((r, i, all) => all.findIndex((x) => x.path === r.path) === i)
+      .map((r) => ({
+        label: `$(repo) ${r.name}`,
+        description: r.path === current ? "current" : r.kind === "ws" ? "open in this window" : undefined,
+        detail: r.path,
+        act: "use" as const,
+        path: r.path,
+      }));
+    items.push(
+      { label: "", kind: vscode.QuickPickItemKind.Separator, act: "use" },
+      { label: "$(folder-opened) Choose a folder…", act: "choose" },
+    );
+    if (current) items.push({ label: "$(close) Close repository", description: "back to the start screen", act: "close" });
+    const pick = await vscode.window.showQuickPick(items, { title: "Grok-map: repository", placeHolder: "Switch to another repository" });
+    if (!pick) return;
+    if (pick.act === "choose") await this.chooseRepo();
+    else if (pick.act === "close") await this.closeRepo();
+    else if (pick.path && pick.path !== current) await this.useRepo(pick.path);
+  }
+
+  async closeRepo(): Promise<void> {
+    this.cancel?.cancel();
+    this.closed = true;
+    await this.context.globalState.update(REPO_KEY, undefined);
+    this.set({ phase: "norepo", repo: undefined, dash: undefined, active: undefined, quiz: undefined, trend: undefined, recent: this.recent(), workspace: this.workspaceRepos() });
   }
 
   async chooseRepo(): Promise<void> {
@@ -261,7 +298,7 @@ export class GrokmapPanel implements vscode.WebviewViewProvider {
   }
 
   private async doLoad(): Promise<void> {
-    const repoPath = this.state.repo?.path ?? this.currentRepo();
+    const repoPath = this.state.repo?.path ?? (this.closed ? undefined : this.currentRepo());
     const base = {
       recent: this.recent(),
       workspace: this.workspaceRepos(),
@@ -328,6 +365,9 @@ export class GrokmapPanel implements vscode.WebviewViewProvider {
         break;
       case "chooseRepo":
         await this.chooseRepo();
+        break;
+      case "switchRepo":
+        await this.switchRepo();
         break;
       case "useRepo":
         await this.useRepo(String(m.path));

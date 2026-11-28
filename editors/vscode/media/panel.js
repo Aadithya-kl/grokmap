@@ -80,7 +80,7 @@
     const repo = state && state.repo;
     return `<div class="top">
       <div class="brand"><img src="${esc(LOGO)}" alt=""><span class="word">Grok-map</span>
-        ${repo ? `<button class="repo-chip" data-act="chooseRepo" title="${esc(repo.path)} · click to switch">${ICON.repo}<span>${esc(repo.name)}</span></button>` : ""}
+        ${repo ? `<button class="repo-chip" data-act="switchRepo" title="${esc(repo.path)}: switch or close" aria-haspopup="menu">${ICON.repo}<span>${esc(repo.name)}</span><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 6 4 4 4-4"/></svg></button>` : ""}
       </div>
       ${repo ? `<button class="icon-btn" data-act="refresh" title="Refresh" aria-label="Refresh">${ICON.refresh}</button>` : ""}
       <button class="icon-btn" data-act="openInEditor" title="Open in an editor tab" aria-label="Open in an editor tab">${ICON.expand}</button>
@@ -207,11 +207,16 @@
       })
       .join("");
     const first = t.periods[0].label;
-    const last = t.periods[t.periods.length - 1].label;
+    const last = t.periods.length > 1 ? t.periods[t.periods.length - 1].label : "";
+    const few = t.periods.length < 6 ? " few" : "";
     return `<div class="card fade-in">
       <h3>New code by ${unit}<span class="aside">${pct(t.aiPct)} by AI</span></h3>
-      <div class="tchart" role="img" aria-label="Lines added per ${unit}: ${fmt(t.ai)} by AI and ${fmt(t.human)} by people over the last ${t.periods.length} ${unit}s">${cols}</div>
-      <div class="taxis"><span>${esc(first)}</span><span>${esc(last)}</span></div>
+      <div class="tchart${few}" role="img" aria-label="Lines added per ${unit}: ${fmt(t.ai)} by AI and ${fmt(t.human)} by people over the last ${t.periods.length} ${unit}s">${cols}</div>
+      <div class="taxis${few}">${
+        few
+          ? `<span>${t.periods.length === 1 ? `${unit === "week" ? "Week of " : ""}${esc(first)}` : `${esc(first)} to ${esc(last)}`}</span>`
+          : `<span>${esc(first)}</span><span>${esc(last)}</span>`
+      }</div>
       <div class="legend" style="grid-template-columns:1fr 1fr">
         <div><span class="sw t-ai"></span><span>AI</span><span class="n">${fmt(t.ai)}</span></div>
         <div><span class="sw t-people"></span><span>People</span><span class="n">${fmt(t.human)}</span></div>

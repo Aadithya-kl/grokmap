@@ -60,9 +60,15 @@
       },
       {
         "command": "grokmap.chooseRepo",
-        "title": "Choose repository\u2026",
+        "title": "Switch repository\u2026",
         "category": "Grok-map",
         "icon": "$(repo)"
+      },
+      {
+        "command": "grokmap.closeRepo",
+        "title": "Close repository",
+        "category": "Grok-map",
+        "icon": "$(close)"
       },
       {
         "command": "grokmap.refreshPanel",

@@ -80,7 +80,8 @@ export function activate(context: vscode.ExtensionContext): void {
       vscode.window.registerWebviewViewProvider(GrokmapPanel.viewId, panel, { webviewOptions: { retainContextWhenHidden: true } }),
       vscode.commands.registerCommand("grokmap.openPanel", () => vscode.commands.executeCommand(`${GrokmapPanel.viewId}.focus`)),
       vscode.commands.registerCommand("grokmap.openPanelInEditor", () => panel?.openInEditor()),
-      vscode.commands.registerCommand("grokmap.chooseRepo", () => panel?.chooseRepo()),
+      vscode.commands.registerCommand("grokmap.chooseRepo", () => panel?.switchRepo()),
+      vscode.commands.registerCommand("grokmap.closeRepo", () => panel?.closeRepo()),
       vscode.commands.registerCommand("grokmap.refreshPanel", () => panel?.load()),
       vscode.commands.registerCommand("grokmap.installCli", async () => {
         await vscode.commands.executeCommand("grokmap.openPanel");
